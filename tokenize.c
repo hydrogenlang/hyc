@@ -106,7 +106,7 @@ tokenize(String input, Token **output)
 		CURTOK.str.len = i - initial_i;
 	}
 
-	return tokcount;
+	return (signed)tokcount;
 }
 #undef NOT_OVERFLOW
 #undef CURCHAR
