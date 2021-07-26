@@ -37,6 +37,7 @@ static void compileExpressionUnaryAddressof(Compiler *compiler, ASTExpressionUna
 static void compileExpressionUnaryValuefrom(Compiler *compiler, ASTExpressionUnary expr);
 static void compileExpressionUnaryPreincrement(Compiler *compiler, ASTExpressionUnary expr);
 static void compileExpressionUnaryPredecrement(Compiler *compiler, ASTExpressionUnary expr);
+static void compileExpressionFunctionCall(Compiler *compiler, ASTExpressionFunctionCall expr);
 static void compileExpression(Compiler *compiler, union ASTExpression *expression);
 
 static void compileStatementCompound(Compiler *compiler, ASTStatementCompound stat);
@@ -126,6 +127,13 @@ compileExpressionUnaryPredecrement(Compiler *compiler, ASTExpressionUnary expr)
 }
 
 static void
+compileExpressionFunctionCall(Compiler *compiler, ASTExpressionFunctionCall expr)
+{
+	compileExpression(compiler, expr.callexpr);
+	asmTextAppend(compiler, "\tcall r15\n\tmov r15, rax");
+}
+
+static void
 compileExpression(Compiler *compiler, union ASTExpression *expression)
 {
 	switch (expression->type) {
@@ -155,6 +163,9 @@ compileExpression(Compiler *compiler, union ASTExpression *expression)
 		break;
 	case ASTExpressionUnaryPredecrement_T:
 		compileExpressionUnaryPredecrement(compiler, expression->Unary);
+		break;
+	case ASTExpressionFunctionCall_T:
+		compileExpressionFunctionCall(compiler, expression->FunctionCall);
 		break;
 	default: break;
 	}
