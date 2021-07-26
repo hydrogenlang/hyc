@@ -27,6 +27,15 @@ static size_t asmAppend(int data, Compiler *compiler, char *fmt, ...);
 #define asmTextAppend(...) asmAppend(0, __VA_ARGS__)
 #define asmDataAppend(...) asmAppend(1, __VA_ARGS__)
 
+static void compileExpressionLiteralIdentifier(Compiler *compiler, ASTExpressionLiteral expr);
+static void compileExpressionLiteralInteger(Compiler *compiler, ASTExpressionLiteral expr);
+static void compileExpressionLiteralString(Compiler *compiler, ASTExpressionLiteral expr);
+static void compileExpressionUnaryNegation(Compiler *compiler, ASTExpressionUnary expr);
+static void compileExpressionUnarySignChange(Compiler *compiler, ASTExpressionUnary expr);
+static void compileExpressionUnaryAddressof(Compiler *compiler, ASTExpressionUnary expr);
+static void compileExpressionUnaryValuefrom(Compiler *compiler, ASTExpressionUnary expr);
+static void compileExpressionUnaryPreincrement(Compiler *compiler, ASTExpressionUnary expr);
+static void compileExpressionUnaryPredecrement(Compiler *compiler, ASTExpressionUnary expr);
 static void compileExpression(Compiler *compiler, union ASTExpression *expression);
 
 static void compileStatementCompound(Compiler *compiler, ASTStatementCompound stat);
@@ -36,6 +45,10 @@ static void compileStatementExpression(Compiler *compiler, ASTStatementExpressio
 static void compileStatement(Compiler *compiler, union ASTStatement *statement);
 
 static void compileGlobalFunction(Compiler *compiler, ASTGlobalFunction func);
+
+///////////////////////////////////////////////////////////////////////////////
+
+static Array(ASTExpressionLiteral) literalStrings;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -56,13 +69,146 @@ asmAppend(int data, Compiler *compiler, char *fmt, ...)
 	a->len += wb;
 }
 
-#define asmTextAppend(...) asmAppend(0, __VA_ARGS__)
-#define asmDataAppend(...) asmAppend(1, __VA_ARGS__)
+/* Expressions ***************************************************************/
+
+static void
+compileExpressionLiteralIdentifier(Compiler *compiler, ASTExpressionLiteral expr)
+{
+}
+
+static void
+compileExpressionLiteralInteger(Compiler *compiler, ASTExpressionLiteral expr)
+{
+	asmTextAppend(compiler, "\tmov r15, %s", expr.value);
+}
+
+static void
+compileExpressionLiteralString(Compiler *compiler, ASTExpressionLiteral expr)
+{
+	pushVector(literalStrings, expr);
+	asmDataAppend(compiler, "\t.STR%d: db \"%s\"",
+			literalStrings.len - 1, expr.value);
+	asmTextAppend(compiler, "\tmov r15, .STR%d", literalStrings.len - 1);
+}
+
+static void
+compileExpressionUnaryNegation(Compiler *compiler, ASTExpressionUnary expr)
+{
+}
+
+static void
+compileExpressionUnarySignChange(Compiler *compiler, ASTExpressionUnary expr)
+{
+}
+
+static void
+compileExpressionUnaryAddressof(Compiler *compiler, ASTExpressionUnary expr)
+{
+}
+
+static void
+compileExpressionUnaryValuefrom(Compiler *compiler, ASTExpressionUnary expr)
+{
+}
+
+static void
+compileExpressionUnaryPreincrement(Compiler *compiler, ASTExpressionUnary expr)
+{
+}
+
+static void
+compileExpressionUnaryPredecrement(Compiler *compiler, ASTExpressionUnary expr)
+{
+}
+
+static void
+compileExpression(Compiler *compiler, union ASTExpression *expression)
+{
+	switch (expression->type) {
+	case ASTExpressionLiteralIdentifier_T:
+		compileExpressionLiteralIdentifier(compiler, expression->Literal);
+		break;
+	case ASTExpressionLiteralInteger_T:
+		compileExpressionLiteralInteger(compiler, expression->Literal);
+		break;
+	case ASTExpressionLiteralString_T:
+		compileExpressionLiteralString(compiler, expression->Literal);
+		break;
+	case ASTExpressionUnaryNegation_T:
+		compileExpressionUnaryNegation(compiler, expression->Unary);
+		break;
+	case ASTExpressionUnarySignChange_T:
+		compileExpressionUnarySignChange(compiler, expression->Unary);
+		break;
+	case ASTExpressionUnaryAddressof_T:
+		compileExpressionUnaryAddressof(compiler, expression->Unary);
+		break;
+	case ASTExpressionUnaryValuefrom_T:
+		compileExpressionUnaryValuefrom(compiler, expression->Unary);
+		break;
+	case ASTExpressionUnaryPreincrement_T:
+		compileExpressionUnaryPreincrement(compiler, expression->Unary);
+		break;
+	case ASTExpressionUnaryPredecrement_T:
+		compileExpressionUnaryPredecrement(compiler, expression->Unary);
+		break;
+	default: break;
+	}
+}
+
+/* Statements ****************************************************************/
+
+static void
+compileStatementCompound(Compiler *compiler, ASTStatementCompound stat)
+{
+	size_t i;
+	for (i = 0; i < stat.len; ++i)
+		compileStatement(compiler, stat.data + i);
+}
+
+static void
+compileStatementConditional(Compiler *compiler, ASTStatementConditional stat)
+{
+	/* TODO! */
+}
+
+static void
+compileStatementReturn(Compiler *compiler, ASTStatementReturn stat)
+{
+	compileExpression(compiler, stat.expr);
+	asmTextAppend(compiler, "\tmov rax, rdx");
+	asmTextAppend(compiler, "\tret");
+}
+
+static void
+compileStatementExpression(Compiler *compiler, ASTStatementExpression stat)
+{
+	compileExpression(compiler, stat.expr);
+}
 
 static void
 compileStatement(Compiler *compiler, union ASTStatement *statement)
 {
+	switch (statement->type) {
+	case ASTStatementNoOp_T:
+		break;
+	case ASTStatementCompound_T:
+		compileStatementCompound(compiler, statement->Compound);
+		break;
+	case ASTStatementConditional_T:
+		compileStatementConditional(compiler, statement->Conditional);
+		break;
+	case ASTStatementReturn_T:
+		compileStatementReturn(compiler, statement->Return);
+		break;
+	case ASTStatementExpression_T:
+		compileStatementExpression(compiler, statement->Expression);
+		break;
+	default: break;
+	}
 }
+
+/* Globals *******************************************************************/
 
 static void
 compileGlobalFunction(Compiler *compiler, ASTGlobalFunction func)
@@ -77,12 +223,17 @@ compileGlobalFunction(Compiler *compiler, ASTGlobalFunction func)
 	asmTextAppend(compiler, "\tret");
 }
 
+/* Module ********************************************************************/
+
 Compiler
 compileModule(ASTModule module)
 {
 	Compiler compiler = newCompiler();
 	size_t i;
 	ASTGlobal *glob;
+
+	/* initialization of global containers */
+	newVector(literalStrings);
 
 	for (i = 0; i < module.len; ++i) {
 		if ((glob = &module.data[i])->type == ASTGlobalFunction_T)

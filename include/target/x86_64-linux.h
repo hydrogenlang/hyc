@@ -27,6 +27,14 @@ typedef struct {
 	String text, data;
 } Compiler;
 
+static inline Compiler newCompiler(void)
+{
+	return (Compiler) {
+		{ malloc(0), 0 },
+		{ malloc(0), 0 },
+	};
+}
+
 Compiler compileModule(ASTModule module);
 
 #endif
