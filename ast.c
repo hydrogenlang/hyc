@@ -107,7 +107,7 @@ tokenstoASTExpression(Tokenizer *t)
 		expr.Literal.value = Strdup(tok->str).data;
 	} else if (tok->type == TokenString) {
 		expr.type = ASTExpressionLiteralString_T;
-		expr.Literal.value = Strdup(tok->str).data;
+		expr.Literal.value = Strdup((String){ tok->str.data + 1, tok->str.len - 2}).data;
 	} else if (tok->type == TokenOpeningParenthesis) {
 		expr = tokenstoASTExpression(t);
 		enextTokenType(t, TokenClosingParenthesis);
