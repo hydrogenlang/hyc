@@ -29,6 +29,8 @@ typedef struct {
 	ssize_t pos;
 } Tokenizer;
 
+#define new(PTR) (*((PTR) = malloc(sizeof *(PTR))))
+
 static Token *prevToken(Tokenizer *t);
 
 static Token *nextToken(Tokenizer *t);
@@ -106,6 +108,27 @@ tokenstoASTExpression(Tokenizer *t)
 	} else if (tok->type == TokenString) {
 		expr.type = ASTExpressionLiteralString_T;
 		expr.Literal.value = Strdup(tok->str).data;
+	} else if (tok->type == TokenOpeningParenthesis) {
+		expr = tokenstoASTExpression(t);
+		enextTokenType(t, TokenClosingParenthesis);
+	} else if (tok->type == TokenExclamationMark) {
+		expr.type = ASTExpressionUnaryNegation_T;
+		new(expr.Unary.expr) = tokenstoASTExpression(t);
+	} else if (tok->type == TokenMinus) {
+		expr.type = ASTExpressionUnarySignChange_T;
+		new(expr.Unary.expr) = tokenstoASTExpression(t);
+	} else if (tok->type == TokenAmperstand) {
+		expr.type = ASTExpressionUnaryAddressof_T;
+		new(expr.Unary.expr) = tokenstoASTExpression(t);
+	} else if (tok->type == TokenAsterisk) {
+		expr.type = ASTExpressionUnaryValuefrom_T;
+		new(expr.Unary.expr) = tokenstoASTExpression(t);
+	} else if (tok->type == TokenPlusPlus) {
+		expr.type = ASTExpressionUnaryPreincrement_T;
+		new(expr.Unary.expr) = tokenstoASTExpression(t);
+	} else if (tok->type == TokenMinusMinus) {
+		expr.type = ASTExpressionUnaryPredecrement_T;
+		new(expr.Unary.expr) = tokenstoASTExpression(t);
 	}
 
 	return expr;

@@ -47,6 +47,12 @@ typedef enum ASTExpressionType {
 	ASTExpressionLiteralIdentifier_T,
 	ASTExpressionLiteralInteger_T,
 	ASTExpressionLiteralString_T,
+	ASTExpressionUnaryNegation_T,
+	ASTExpressionUnarySignChange_T,
+	ASTExpressionUnaryAddressof_T,
+	ASTExpressionUnaryValuefrom_T,
+	ASTExpressionUnaryPreincrement_T,
+	ASTExpressionUnaryPredecrement_T,
 	ASTExpression_Count,
 } ASTExpressionType;
 
@@ -59,10 +65,22 @@ typedef struct ASTExpressionLiteral {
 	char *value;
 } ASTExpressionLiteral;
 
+typedef struct ASTExpressionUnary {
+	enum ASTExpressionType type;
+	union ASTExpression *expr;
+} ASTExpressionUnary;
+
 typedef union ASTExpression {
 	enum ASTExpressionType type;
 	struct ASTExpressionAny Any;
 	struct ASTExpressionLiteral Literal;
+	struct ASTExpressionUnary Unary;
+	struct ASTExpressionUnary UnaryNegation;
+	struct ASTExpressionUnary UnarySignChange;
+	struct ASTExpressionUnary UnaryAddressof;
+	struct ASTExpressionUnary UnaryValuefrom;
+	struct ASTExpressionUnary UnaryPreincrement;
+	struct ASTExpressionUnary UnaryPredecrement;
 } ASTExpression;
 
 /**/
