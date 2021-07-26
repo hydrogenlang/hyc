@@ -89,6 +89,35 @@ tokenize(String input, Token **output)
 			SEEKCHAR;
 			while (CURCHAR != '"' && NOT_OVERFLOW) SEEKCHAR;
 			SEEKCHAR;
+		/* Unary and conditional operators */
+		} else if (CURCHAR == '!') {
+			TYPE(ExclamationMark);
+			if (NEXTCHAR == '=') {
+				TYPE(NotEqual); SEEKCHAR;
+			}
+			SEEKCHAR;
+		} else if (CURCHAR == '=') {
+			TYPE(Assignment);
+			if (NEXTCHAR == '=') {
+				TYPE(Equal); SEEKCHAR;
+			}
+			SEEKCHAR;
+		} else if (CURCHAR == '-') {
+			TYPE(Minus);
+			if (NEXTCHAR == '-') {
+				TYPE(MinusMinus); SEEKCHAR;
+			} else if (NEXTCHAR == '=') {
+				TYPE(MinusEqual); SEEKCHAR;
+			}
+			SEEKCHAR;
+		} else if (CURCHAR == '+') {
+			TYPE(Plus);
+			if (NEXTCHAR == '+') {
+				TYPE(PlusPlus); SEEKCHAR;
+			} else if (NEXTCHAR == '=') {
+				TYPE(PlusEqual); SEEKCHAR;
+			}
+			SEEKCHAR;
 		/* Brackets */
 		} else if (CURCHAR == '(') { TYPE(OpeningParenthesis); SEEKCHAR;
 		} else if (CURCHAR == ')') { TYPE(ClosingParenthesis); SEEKCHAR;
@@ -97,7 +126,6 @@ tokenize(String input, Token **output)
 		} else if (CURCHAR == '{') { TYPE(OpeningBrace); SEEKCHAR;
 		} else if (CURCHAR == '}') { TYPE(ClosingBrace); SEEKCHAR;
 		/* Other single-char operators */
-		} else if (CURCHAR == '!') { TYPE(ExclamationMark); SEEKCHAR;
 		} else if (CURCHAR == '*') { TYPE(Asterisk); SEEKCHAR;
 		} else if (CURCHAR == '&') { TYPE(Amperstand); SEEKCHAR;
 		} else if (CURCHAR == ';') { TYPE(Semicolon); SEEKCHAR;
