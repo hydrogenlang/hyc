@@ -100,7 +100,7 @@ static void
 compileExpressionUnarySignChange(Compiler *compiler, ASTExpressionUnary expr)
 {
 	compileExpression(compiler, expr.expr);
-	asmTextAppend("\tneg r15");
+	asmTextAppend(compiler, "\tneg r15");
 }
 
 static void
