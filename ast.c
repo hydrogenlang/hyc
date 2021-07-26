@@ -205,6 +205,25 @@ tokenstoASTStatementExpression(Tokenizer *t)
 }
 
 static ASTStatement
+tokenstoASTStatementInlineAssembly(Tokenizer *t)
+{
+	/* asm <string literal>; */
+	ASTStatement stat;
+	Token *tok;
+
+	stat.type = ASTStatementInlineAssembly_T;
+	tok = enextTokenType(t, TokenIdentifier);
+	if (Strccmp(tok->str, "asm"))
+		error(tok, "expected 'asm' keyword");
+
+	stat.InlineAssembly.expr = tokenstoASTExpression(t).Literal;
+
+	tok = enextTokenType(t, TokenSemicolon);
+
+	return stat;
+}
+
+static ASTStatement
 tokenstoASTStatement(Tokenizer *t)
 {
 	ASTStatement stat;
@@ -224,6 +243,9 @@ tokenstoASTStatement(Tokenizer *t)
 	} else if (tok->type == TokenIdentifier && !Strccmp(tok->str, "return")) {
 		prevToken(t);
 		stat = tokenstoASTStatementReturn(t);
+	} else if (tok->type == TokenIdentifier && !Strccmp(tok->str, "asm")) {
+		prevToken(t);
+		stat = tokenstoASTStatementInlineAssembly(t);
 	} else {
 		prevToken(t);
 		stat = tokenstoASTStatementExpression(t);
