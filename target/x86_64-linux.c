@@ -178,7 +178,7 @@ static void
 compileStatementReturn(Compiler *compiler, ASTStatementReturn stat)
 {
 	compileExpression(compiler, stat.expr);
-	asmTextAppend(compiler, "\tmov rax, rdx");
+	asmTextAppend(compiler, "\tmov rax, r15");
 	asmTextAppend(compiler, "\tret");
 }
 
