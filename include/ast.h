@@ -143,7 +143,7 @@ typedef struct ASTGlobalAny {
 typedef struct ASTGlobalFunction {
 	enum ASTGlobalType type;
 	struct ASTExpressionLiteral name;
-	union ASTStatement body;
+	union ASTStatement *body;
 } ASTGlobalFunction;
 
 typedef union ASTGlobal {

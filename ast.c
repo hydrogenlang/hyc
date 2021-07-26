@@ -247,7 +247,7 @@ tokenstoASTGlobalFunction(Tokenizer *t)
 			break;
 	}
 
-	global.Function.body = tokenstoASTStatement(t);
+	new(global.Function.body) = tokenstoASTStatement(t);
 
 	return global;
 }
