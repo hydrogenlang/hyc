@@ -49,9 +49,22 @@ asmAppend(int data, Compiler *compiler, char *fmt, ...)
 #define asmTextAppend(...) asmAppend(0, __VA_ARGS__)
 #define asmDataAppend(...) asmAppend(1, __VA_ARGS__)
 
-static
-compileFunction(Compiler *compiler, ASTGlobalFunction func)
+static void
+compileStatement(Compiler *compiler, union ASTStatement *statement)
 {
+}
+
+static void
+compileGlobalFunction(Compiler *compiler, ASTGlobalFunction func)
+{
+	/*
+	**	<function name>:
+	**		<function body>
+	**		ret
+	*/
+	asmTextAppend(compiler, "%s:", func.name.value);
+	compileStatement(compiler, func.body);
+	asmTextAppend(compiler, "\tret");
 }
 
 Compiler
@@ -63,7 +76,7 @@ compileModule(ASTModule module)
 
 	for (i = 0; i < module.len; ++i) {
 		if ((glob = &module.data[i])->type == ASTGlobalFunction_T)
-			compileFunction(&compiler, module.data[i].Function);
+			compileGlobalFunction(&compiler, module.data[i].Function);
 	}
 
 	return compiler;
