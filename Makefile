@@ -17,10 +17,16 @@
 
 include config.mk
 
+SRC = hyc.c util.c err.c str.c tokenize.c ast.c target/${TARGET}.c
+OBJ = ${SRC:.c=.o}
+
 all: hyc
 
-hyc: hyc.c util.c err.c str.c tokenize.c ast.c
-	${CC} -std=c99 -pedantic -Wall -Wextra -Wconversion -Iinclude -o $@ $^
+%.o: %.c include/%.h
+	${CC} ${CFLAGS} -c -o $@ $<
+
+hyc: ${OBJ}
+	${CC} ${CFLAGS} -o $@ $^
 
 install: hyc
 	mkdir -p ${DESTDIR}${PREFIX}/bin
@@ -28,6 +34,6 @@ install: hyc
 	install -Dm755 hyc-wrapper ${DESTDIR}${PREFIX}/bin/hyc
 
 clean:
-	rm -f hyc
+	rm -f ${OBJ} hyc
 
 .PHONY: all clean

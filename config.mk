@@ -17,5 +17,12 @@
 
 VERSION = 0.1
 
+TARGET = x86_64-linux
 PREFIX = /usr/local
+
+INC = -Iinclude
+CFLAGS = -std=c99 -pedantic ${INC} \
+		 -Wall -Wextra -Wconversion \
+		 -DTARGET_$(subst -,_,${TARGET}) -DTARGET=\"${TARGET}\"
+
 CC = gcc

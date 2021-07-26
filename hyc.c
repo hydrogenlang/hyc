@@ -31,6 +31,12 @@
 #include <tokenize.h>
 #include <util.h>
 
+#   ifdef TARGET_x86_64_linux
+#       include <target/x86_64-linux.h>
+#   else
+#       error Unknown or unspecified target platform. Change 'config.mk' file.
+#   endif
+
 /* function prototypes */
 static ssize_t mapfile(const char *filename, char **ptr);
 static ssize_t readfile(const char *filename, char *data, size_t len);
@@ -97,6 +103,7 @@ main(int argc, char *argv[])
 	for (i = 0; i < argc; ++i) {
 		Array(Token) tokens;
 		ASTModule module;
+		Compiler compiler;
 
 		if ((signed)(s.len = (unsigned)mapfile(argv[i], &(s.data))) < 0)
 			die("mapfile(%s):", argv[i]);
@@ -118,6 +125,13 @@ main(int argc, char *argv[])
 		*/
 
 		module = tokenstoASTModule(tokens.data, tokens.len);
+		compiler = compileModule(module);
+
+		puts("section .text");
+		puts(compiler.text.data);
+
+		puts("section .data");
+		puts(compiler.data.data);
 
 		free(tokens.data);
 		munmap(s.data, s.len);
