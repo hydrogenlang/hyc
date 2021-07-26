@@ -43,6 +43,7 @@ static void compileStatementCompound(Compiler *compiler, ASTStatementCompound st
 static void compileStatementConditional(Compiler *compiler, ASTStatementConditional stat);
 static void compileStatementReturn(Compiler *compiler, ASTStatementReturn stat);
 static void compileStatementExpression(Compiler *compiler, ASTStatementExpression stat);
+static void compileStatementInlineAssembly(Compiler *compiler, ASTStatementInlineAssembly stat);
 static void compileStatement(Compiler *compiler, union ASTStatement *statement);
 
 static void compileGlobalFunction(Compiler *compiler, ASTGlobalFunction func);
@@ -190,6 +191,12 @@ compileStatementExpression(Compiler *compiler, ASTStatementExpression stat)
 }
 
 static void
+compileStatementInlineAssembly(Compiler *compiler, ASTStatementInlineAssembly stat)
+{
+	asmTextAppend(compiler, "\t%s", stat.expr.value);
+}
+
+static void
 compileStatement(Compiler *compiler, union ASTStatement *statement)
 {
 	switch (statement->type) {
@@ -206,6 +213,9 @@ compileStatement(Compiler *compiler, union ASTStatement *statement)
 		break;
 	case ASTStatementExpression_T:
 		compileStatementExpression(compiler, statement->Expression);
+		break;
+	case ASTStatementInlineAssembly_T:
+		compileStatementInlineAssembly(compiler, statement->InlineAssembly);
 		break;
 	default: break;
 	}
