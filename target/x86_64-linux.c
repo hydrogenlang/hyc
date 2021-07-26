@@ -20,25 +20,35 @@
 
 #include <target/x86_64-linux.h>
 #include <stdarg.h>
+#include <string.h>
 
-static Compiler newCompiler(void)
-{
-	return (Compiler) {
-		{ malloc(0), 0 },
-		{ malloc(0), 0 },
-	};
-}
+static size_t asmAppend(int data, Compiler *compiler, char *fmt, ...);
+
+#define asmTextAppend(...) asmAppend(0, __VA_ARGS__)
+#define asmDataAppend(...) asmAppend(1, __VA_ARGS__)
+
+static void compileExpression(Compiler *compiler, union ASTExpression *expression);
+
+static void compileStatementCompound(Compiler *compiler, ASTStatementCompound stat);
+static void compileStatementConditional(Compiler *compiler, ASTStatementConditional stat);
+static void compileStatementReturn(Compiler *compiler, ASTStatementReturn stat);
+static void compileStatementExpression(Compiler *compiler, ASTStatementExpression stat);
+static void compileStatement(Compiler *compiler, union ASTStatement *statement);
+
+static void compileGlobalFunction(Compiler *compiler, ASTGlobalFunction func);
+
+///////////////////////////////////////////////////////////////////////////////
 
 static size_t
 asmAppend(int data, Compiler *compiler, char *fmt, ...)
 {
 	char buf[8192];
-	int wb;
+	size_t wb;
 	va_list ap;
 	String *a = (data ? &compiler->data : &compiler->text);
 
 	va_start(ap, fmt);
-	wb = vsnprintf(buf, sizeof buf - 1, fmt, ap);
+	wb = (unsigned)vsnprintf(buf, sizeof buf - 1, fmt, ap);
 	va_end(ap);
 	buf[wb++] = '\n'; buf[wb] = '\0';
 	a->data = realloc(a->data, a->len + wb + 1);
