@@ -20,12 +20,13 @@
 
 #include <target/x86_64-linux.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 
-static size_t asmAppend(int data, Compiler *compiler, char *fmt, ...);
+static size_t asmAppend(String *s, char *fmt, ...);
 
-#define asmTextAppend(...) asmAppend(0, __VA_ARGS__)
-#define asmDataAppend(...) asmAppend(1, __VA_ARGS__)
+#define asmTextAppend(COMPILER, ...) asmAppend(&((COMPILER)->text), __VA_ARGS__)
+#define asmDataAppend(COMPILER, ...) asmAppend(&((COMPILER)->data), __VA_ARGS__)
 
 static void compileExpressionLiteralIdentifier(Compiler *compiler, ASTExpressionLiteral expr);
 static void compileExpressionLiteralInteger(Compiler *compiler, ASTExpressionLiteral expr);
@@ -53,20 +54,20 @@ static Array(ASTExpressionLiteral) literalStrings;
 ///////////////////////////////////////////////////////////////////////////////
 
 static size_t
-asmAppend(int data, Compiler *compiler, char *fmt, ...)
+asmAppend(String *s, char *fmt, ...)
 {
 	char buf[8192];
 	size_t wb;
 	va_list ap;
-	String *a = (data ? &compiler->data : &compiler->text);
 
 	va_start(ap, fmt);
 	wb = (unsigned)vsnprintf(buf, sizeof buf - 1, fmt, ap);
 	va_end(ap);
 	buf[wb++] = '\n'; buf[wb] = '\0';
-	a->data = realloc(a->data, a->len + wb + 1);
-	strcpy(a->data + a->len, buf);
-	a->len += wb;
+	s->data = realloc(s->data, s->len + wb + 1);
+	strcpy(s->data + s->len, buf);
+	s->len += wb;
+	return wb;
 }
 
 /* Expressions ***************************************************************/

@@ -22,6 +22,7 @@
 #define _TARGET_H
 
 #include <ast.h>
+#include <stdlib.h>
 
 typedef struct {
 	String text, data;
