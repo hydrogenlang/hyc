@@ -99,6 +99,8 @@ compileExpressionUnaryNegation(Compiler *compiler, ASTExpressionUnary expr)
 static void
 compileExpressionUnarySignChange(Compiler *compiler, ASTExpressionUnary expr)
 {
+	compileExpression(compiler, expr.expr);
+	asmTextAppend("\tneg r15");
 }
 
 static void
