@@ -132,6 +132,24 @@ tokenstoASTStatementCompound(Tokenizer *t)
 }
 
 static ASTStatement
+tokenstoASTStatementReturn(Tokenizer *t)
+{
+	/* return <expr>; */
+	ASTStatement stat;
+	Token *tok;
+
+	tok = enextTokenType(t, TokenIdentifier);
+	if (Strccmp(tok->str, "return"))
+		error(tok, "expected 'return' keyword");
+
+	*(stat.Return.expr = malloc(sizeof *stat.Return.expr)) = tokenstoASTExpression(t);
+
+	tok = enextTokenType(t, TokenSemicolon);
+
+	return stat;
+}
+
+static ASTStatement
 tokenstoASTStatement(Tokenizer *t)
 {
 	ASTStatement stat;
@@ -145,6 +163,9 @@ tokenstoASTStatement(Tokenizer *t)
 	} else if (tok->type == TokenOpeningBrace) {
 		prevToken(t);
 		stat = tokenstoASTStatementCompound(t);
+	} else if (tok->type == TokenIdentifier && !Strccmp(tok->str, "return")) {
+		prevToken(t);
+		stat = tokenstoASTStatementReturn(t);
 	}
 
 	return stat;
