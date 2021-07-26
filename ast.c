@@ -29,13 +29,22 @@ typedef struct {
 	ssize_t pos;
 } Tokenizer;
 
+static Token *prevToken(Tokenizer *t);
+
 static Token *nextToken(Tokenizer *t);
+static Token *nextTokenType(Tokenizer *t, TokenType type);
 static Token *enextToken(Tokenizer *t);
 static Token *enextTokenType(Tokenizer *t, TokenType type);
 
 static ASTStatement tokenstoASTStatement(Tokenizer *t);
 
 static ASTGlobal tokenstoASTGlobalFunction(Tokenizer *t);
+
+static Token *
+prevToken(Tokenizer *t)
+{
+	return (--t->pos >= 0) ? &(t->data[t->pos]) : NULL;
+}
 
 static Token *
 nextToken(Tokenizer *t)
@@ -105,6 +114,24 @@ tokenstoASTExpression(Tokenizer *t)
 /* Statements */
 
 static ASTStatement
+tokenstoASTStatementCompound(Tokenizer *t)
+{
+	ASTStatement stat;
+	Token *tok;
+
+	tok = enextTokenType(t, TokenOpeningBrace);
+	stat.type = ASTStatementCompound_T;
+	newVector(stat.Compound);
+
+	while ((tok = enextToken(t))->type != TokenClosingBrace) {
+		prevToken(t);
+		pushVector(stat.Compound, tokenstoASTStatement(t));
+	}
+
+	return stat;
+}
+
+static ASTStatement
 tokenstoASTStatement(Tokenizer *t)
 {
 	ASTStatement stat;
@@ -115,6 +142,9 @@ tokenstoASTStatement(Tokenizer *t)
 	if (0) {
 	} else if (tok->type == TokenSemicolon) {
 		stat.type = ASTStatementNoOp_T;
+	} else if (tok->type == TokenOpeningBrace) {
+		prevToken(t);
+		stat = tokenstoASTStatementCompound(t);
 	}
 
 	return stat;
