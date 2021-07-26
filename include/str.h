@@ -40,6 +40,7 @@ typedef struct Array {
 } Array;
 
 #define Array(T) struct { T *data; size_t len; }
+#define lastArray(ARR) ((ARR).data[(ARR).len - 1])
 
 /* Vector - dynamic array */
 #define newVector(ARR) ((ARR).data = malloc((ARR).len = 0))

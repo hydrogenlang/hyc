@@ -51,7 +51,37 @@ static void compileGlobalFunction(Compiler *compiler, ASTGlobalFunction func);
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static Array(ASTExpressionLiteral) literalStrings;
+enum LiteralIdentifierType {
+	LINULL,
+	LIFunction, LIVariable,
+	LICount
+};
+
+struct LiteralIdentifier {
+	enum LiteralIdentifierType type;
+	ASTExpressionLiteral *expr;
+};
+
+static struct LiteralIdentifier
+newLiteralIdentifier_p(enum LiteralIdentifierType type, ASTExpressionLiteral *expr)
+{
+	return (struct LiteralIdentifier){ type, expr };
+}
+
+struct LiteralIdentifierTree {
+	Array(struct LiteralIdentifier) identifiers;
+};
+
+static struct LiteralIdentifierTree
+newLiteralIdentifierTree(void)
+{
+	struct LiteralIdentifierTree ret;
+	newVector(ret.identifiers);
+	return ret;
+}
+
+static Array(struct LiteralIdentifierTree) globalLiteralIdentifierTree;
+static Array(ASTExpressionLiteral *) literalStrings;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -88,7 +118,7 @@ compileExpressionLiteralInteger(Compiler *compiler, ASTExpressionLiteral expr)
 static void
 compileExpressionLiteralString(Compiler *compiler, ASTExpressionLiteral expr)
 {
-	pushVector(literalStrings, expr);
+	pushVector(literalStrings, &expr);
 	asmDataAppend(compiler, "\t.STR%d: db \"%s\"",
 			literalStrings.len - 1, expr.value);
 	asmTextAppend(compiler, "\tmov r15, .STR%d", literalStrings.len - 1);
@@ -242,6 +272,9 @@ compileGlobalFunction(Compiler *compiler, ASTGlobalFunction func)
 	**		<function body>
 	**		ret
 	*/
+
+	pushVector(lastArray(globalLiteralIdentifierTree).identifiers,
+			newLiteralIdentifier_p(LIFunction, &(func.name)));
 	asmTextAppend(compiler, "%s:", func.name.value);
 	compileStatement(compiler, func.body);
 	asmTextAppend(compiler, "\tret");
@@ -257,7 +290,10 @@ compileModule(ASTModule module)
 	ASTGlobal *glob;
 
 	/* initialization of global containers */
+	newVector(globalLiteralIdentifierTree);
 	newVector(literalStrings);
+
+	pushVector(globalLiteralIdentifierTree, newLiteralIdentifierTree());
 
 	for (i = 0; i < module.len; ++i) {
 		if ((glob = &module.data[i])->type == ASTGlobalFunction_T)
