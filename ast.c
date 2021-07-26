@@ -142,8 +142,8 @@ tokenstoASTStatementCompound(Tokenizer *t)
 	ASTStatement stat;
 	Token *tok;
 
-	tok = enextTokenType(t, TokenOpeningBrace);
 	stat.type = ASTStatementCompound_T;
+	tok = enextTokenType(t, TokenOpeningBrace);
 	newVector(stat.Compound);
 
 	while ((tok = enextToken(t))->type != TokenClosingBrace) {
@@ -161,6 +161,7 @@ tokenstoASTStatementConditional(Tokenizer *t)
 	ASTStatement stat;
 	Token *tok;
 
+	stat.type = ASTStatementConditional_T;
 	tok = enextTokenType(t, TokenIdentifier);
 	if (Strccmp(tok->str, "if"))
 		error(tok, "expected 'if' keyword");
@@ -178,6 +179,7 @@ tokenstoASTStatementReturn(Tokenizer *t)
 	ASTStatement stat;
 	Token *tok;
 
+	stat.type = ASTStatementReturn_T;
 	tok = enextTokenType(t, TokenIdentifier);
 	if (Strccmp(tok->str, "return"))
 		error(tok, "expected 'return' keyword");
@@ -195,6 +197,7 @@ tokenstoASTStatementExpression(Tokenizer *t)
 	/* <expr>; */
 	ASTStatement stat;
 
+	stat.type = ASTStatementExpression_T;
 	*(stat.Expression.expr = malloc(sizeof *stat.Expression.expr))
 		= tokenstoASTExpression(t);
 

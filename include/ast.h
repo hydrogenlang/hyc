@@ -88,6 +88,7 @@ typedef union ASTExpression {
 typedef enum ASTStatementType {
 	ASTStatementNoOp_T = 0,
 	ASTStatementCompound_T,
+	ASTStatementConditional_T,
 	ASTStatementReturn_T,
 	ASTStatementExpression_T,
 	ASTStatement_Count,
