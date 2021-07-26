@@ -170,6 +170,18 @@ tokenstoASTStatementReturn(Tokenizer *t)
 }
 
 static ASTStatement
+tokenstoASTStatementExpression(Tokenizer *t)
+{
+	/* <expr>; */
+	ASTStatement stat;
+
+	*(stat.Expression.expr = malloc(sizeof *stat.Expression.expr))
+		= tokenstoASTExpression(t);
+
+	return stat;
+}
+
+static ASTStatement
 tokenstoASTStatement(Tokenizer *t)
 {
 	ASTStatement stat;
@@ -183,14 +195,15 @@ tokenstoASTStatement(Tokenizer *t)
 	} else if (tok->type == TokenOpeningBrace) {
 		prevToken(t);
 		stat = tokenstoASTStatementCompound(t);
-	} else if (tok->type == TokenIdentifier) {
-		if (!Strccmp(tok->str, "if")) {
-			prevToken(t);
-			stat = tokenstoASTStatementConditional(t);
-		} else if (!Strccmp(tok->str, "return")) {
-			prevToken(t);
-			stat = tokenstoASTStatementReturn(t);
-		}
+	} else if (tok->type == TokenIdentifier && !Strccmp(tok->str, "if")) {
+		prevToken(t);
+		stat = tokenstoASTStatementConditional(t);
+	} else if (tok->type == TokenIdentifier && !Strccmp(tok->str, "return")) {
+		prevToken(t);
+		stat = tokenstoASTStatementReturn(t);
+	} else {
+		prevToken(t);
+		stat = tokenstoASTStatementExpression(t);
 	}
 
 	return stat;

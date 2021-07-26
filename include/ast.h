@@ -71,6 +71,7 @@ typedef enum ASTStatementType {
 	ASTStatementNoOp_T = 0,
 	ASTStatementCompound_T,
 	ASTStatementReturn_T,
+	ASTStatementExpression_T,
 	ASTStatement_Count,
 } ASTStatementType;
 
@@ -95,12 +96,18 @@ typedef struct ASTStatementReturn {
 	union ASTExpression *expr;
 } ASTStatementReturn;
 
+typedef struct ASTStatementExpression {
+	enum ASTStatementType type;
+	union ASTExpression *expr;
+} ASTStatementExpression;
+
 typedef union ASTStatement {
 	enum ASTStatementType type;
 	struct ASTStatementAny Any;
 	struct ASTStatementCompound Compound;
 	struct ASTStatementConditional Conditional;
 	struct ASTStatementReturn Return;
+	struct ASTStatementExpression Expression;
 } ASTStatement;
 
 /**/
