@@ -84,6 +84,12 @@ typedef struct ASTStatementCompound {
 	size_t len;
 } ASTStatementCompound;
 
+typedef struct ASTStatementConditional {
+	enum ASTStatementType type;
+	union ASTExpression *condition;
+	union ASTStatement *body;
+} ASTStatementConditional;
+
 typedef struct ASTStatementReturn {
 	enum ASTStatementType type;
 	union ASTExpression *expr;
@@ -93,6 +99,7 @@ typedef union ASTStatement {
 	enum ASTStatementType type;
 	struct ASTStatementAny Any;
 	struct ASTStatementCompound Compound;
+	struct ASTStatementConditional Conditional;
 	struct ASTStatementReturn Return;
 } ASTStatement;
 

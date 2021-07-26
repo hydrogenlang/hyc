@@ -132,6 +132,26 @@ tokenstoASTStatementCompound(Tokenizer *t)
 }
 
 static ASTStatement
+tokenstoASTStatementConditional(Tokenizer *t)
+{
+	/* if <expr> <condition>; */
+	ASTStatement stat;
+	Token *tok;
+
+	tok = enextTokenType(t, TokenIdentifier);
+	if (Strccmp(tok->str, "if"))
+		error(tok, "expected 'if' keyword");
+
+	*(stat.Conditional.condition = malloc(sizeof *stat.Conditional.condition))
+		= tokenstoASTExpression(t);
+
+	*(stat.Conditional.body = malloc(sizeof *stat.Conditional.body))
+		= tokenstoASTStatement(t);
+
+	return stat;
+}
+
+static ASTStatement
 tokenstoASTStatementReturn(Tokenizer *t)
 {
 	/* return <expr>; */
@@ -163,9 +183,14 @@ tokenstoASTStatement(Tokenizer *t)
 	} else if (tok->type == TokenOpeningBrace) {
 		prevToken(t);
 		stat = tokenstoASTStatementCompound(t);
-	} else if (tok->type == TokenIdentifier && !Strccmp(tok->str, "return")) {
-		prevToken(t);
-		stat = tokenstoASTStatementReturn(t);
+	} else if (tok->type == TokenIdentifier) {
+		if (!Strccmp(tok->str, "if")) {
+			prevToken(t);
+			stat = tokenstoASTStatementConditional(t);
+		} else if (!Strccmp(tok->str, "return")) {
+			prevToken(t);
+			stat = tokenstoASTStatementReturn(t);
+		}
 	}
 
 	return stat;
