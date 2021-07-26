@@ -29,6 +29,7 @@ typedef enum {
 	TokenOpeningParenthesis, TokenClosingParenthesis,
 	TokenOpeningBracket, TokenClosingBracket,
 	TokenOpeningBrace, TokenClosingBrace,
+	TokenExclamationMark,
 	TokenAsterisk, TokenAmperstand,
 	TokenSemicolon, TokenComma, TokenDot,
 	TokenColon, TokenDoubleColon,

@@ -97,6 +97,7 @@ tokenize(String input, Token **output)
 		} else if (CURCHAR == '{') { TYPE(OpeningBrace); SEEKCHAR;
 		} else if (CURCHAR == '}') { TYPE(ClosingBrace); SEEKCHAR;
 		/* Other single-char operators */
+		} else if (CURCHAR == '!') { TYPE(ExclamationMark); SEEKCHAR;
 		} else if (CURCHAR == '*') { TYPE(Asterisk); SEEKCHAR;
 		} else if (CURCHAR == '&') { TYPE(Amperstand); SEEKCHAR;
 		} else if (CURCHAR == ';') { TYPE(Semicolon); SEEKCHAR;
