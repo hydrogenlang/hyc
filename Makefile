@@ -19,7 +19,7 @@ include config.mk
 
 all: hyc
 
-hyc: hyc.c util.c str.c tokenize.c ast.c
+hyc: hyc.c util.c err.c str.c tokenize.c ast.c
 	${CC} -std=c99 -pedantic -Wall -Wextra -Wconversion -Iinclude -o $@ $^
 
 install: hyc

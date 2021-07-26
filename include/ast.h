@@ -22,6 +22,7 @@
 #define _AST_H
 
 #include <str.h>
+#include <tokenize.h>
 
 /* Expressions */
 struct ASTExpressionAny;
@@ -109,7 +110,7 @@ typedef struct ASTGlobalAny {
 
 typedef struct ASTGlobalFunction {
 	enum ASTGlobalType type;
-	String name;
+	struct ASTExpressionLiteral name;
 	union ASTStatement body;
 } ASTGlobalFunction;
 
@@ -122,9 +123,12 @@ typedef union ASTGlobal {
 /**/
 
 typedef struct ASTModule {
-	enum ASTGlobalType type;
 	union ASTGlobal *data;
 	size_t len;
 } ASTModule;
+
+/**/
+
+ASTModule tokenstoASTModule(Token *tdata, size_t tlen);
 
 #endif

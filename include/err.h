@@ -18,30 +18,12 @@
 
 */
 
-#include <str.h>
-#include <stdlib.h>
-#include <string.h>
+#ifndef _ERR_H
+#define _ERR_H
 
-int
-Strcmp(const String s1, const String s2)
-{
-	if (s1.len != s2.len)
-		return (int)(s1.len - s2.len);
-	return strncmp(s1.data, s2.data, s1.len);
-}
+#include <stdarg.h>
+#include <tokenize.h>
 
-int
-Strccmp(const String s, const char *cs)
-{
-	if (s.len != strlen(cs))
-		return (int)(s.len - strlen(cs));
-	return strncmp(s.data, cs, s.len);
-}
+void error(Token *t, const char *fmt, ...);
 
-String
-Strdup(const String s)
-{
-	String r = { strncpy(malloc(s.len + 1), s.data, s.len), s.len };
-	r.data[s.len] = 0;
-	return r;
-}
+#endif

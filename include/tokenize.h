@@ -37,6 +37,7 @@ typedef enum {
 typedef struct Token {
 	TokenType type;
 	String str;
+	size_t line, col;
 } Token;
 
 Token newToken(void);

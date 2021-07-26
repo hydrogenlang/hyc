@@ -38,21 +38,30 @@ tokenize(String input, Token **output)
 #define CHARPLUS(N) (i + (N) < input.len ? input.data[i + (N)] : 0)
 #define CURTOK ((*output)[tokcount - 1])
 #define TYPE(T) (CURTOK.type = Token##T)
+#define SEEKCHAR (++i, ++col)
 {
 	size_t tokcount;
 	size_t i, initial_i;
+	size_t ln, col;
 
 	*output = malloc(tokcount = 0);
-	i = 0;
+	i = ln = col = 0;
 
 	while (NOT_OVERFLOW) {
 		*output = realloc(*output, (++tokcount) * sizeof (**output));
 		CURTOK = newToken();
 
-		while (isspace(CURCHAR) && NOT_OVERFLOW)
-			++i;
+		while (isspace(CURCHAR) && NOT_OVERFLOW) {
+			if (CURCHAR == '\n') {
+				++ln; col = 0;
+				++i;
+			} else SEEKCHAR;
+		}
 
 		CURTOK.str.data = input.data + i;
+		CURTOK.line = ln;
+		CURTOK.col = col;
+
 		initial_i = i;
 
 		if (!NOT_OVERFLOW) {
@@ -62,51 +71,51 @@ tokenize(String input, Token **output)
 		     ||  (CURCHAR >= 'A' && CURCHAR <= 'Z')
 			 ||  (CURCHAR == '_')) {
 			TYPE(Identifier);
-			++i;
+			SEEKCHAR;
 			while (((CURCHAR >= 'a' && CURCHAR <= 'z')
 			   ||   (CURCHAR >= 'A' && CURCHAR <= 'Z')
 			   ||   (CURCHAR >= '0' && CURCHAR <= '9')
 			   ||   (CURCHAR == '_'))
-			   &&  NOT_OVERFLOW) ++i;
+			   &&  NOT_OVERFLOW) SEEKCHAR;
 		/* Integer */
 		} else if (CURCHAR >= '0' && CURCHAR <= '9') {
 			TYPE(Integer);
-			++i;
+			SEEKCHAR;
 			while ((CURCHAR >= '0' && CURCHAR <= '9')
-			   &&  NOT_OVERFLOW) ++i;
+			   &&  NOT_OVERFLOW) SEEKCHAR;
 		/* String */
 		} else if (CURCHAR == '"') {
 			TYPE(String);
-			++i;
-			while (CURCHAR != '"' && NOT_OVERFLOW) ++i;
-			++i;
+			SEEKCHAR;
+			while (CURCHAR != '"' && NOT_OVERFLOW) SEEKCHAR;
+			SEEKCHAR;
 		/* Brackets */
-		} else if (CURCHAR == '(') { TYPE(OpeningParenthesis); ++i;
-		} else if (CURCHAR == ')') { TYPE(ClosingParenthesis); ++i;
-		} else if (CURCHAR == '[') { TYPE(OpeningBracket); ++i;
-		} else if (CURCHAR == ']') { TYPE(ClosingBracket); ++i;
-		} else if (CURCHAR == '{') { TYPE(OpeningBrace); ++i;
-		} else if (CURCHAR == '}') { TYPE(ClosingBrace); ++i;
+		} else if (CURCHAR == '(') { TYPE(OpeningParenthesis); SEEKCHAR;
+		} else if (CURCHAR == ')') { TYPE(ClosingParenthesis); SEEKCHAR;
+		} else if (CURCHAR == '[') { TYPE(OpeningBracket); SEEKCHAR;
+		} else if (CURCHAR == ']') { TYPE(ClosingBracket); SEEKCHAR;
+		} else if (CURCHAR == '{') { TYPE(OpeningBrace); SEEKCHAR;
+		} else if (CURCHAR == '}') { TYPE(ClosingBrace); SEEKCHAR;
 		/* Other single-char operators */
-		} else if (CURCHAR == '*') { TYPE(Asterisk); ++i;
-		} else if (CURCHAR == '&') { TYPE(Amperstand); ++i;
-		} else if (CURCHAR == ';') { TYPE(Semicolon); ++i;
-		} else if (CURCHAR == ',') { TYPE(Comma); ++i;
-		} else if (CURCHAR == '.') { TYPE(Dot); ++i;
+		} else if (CURCHAR == '*') { TYPE(Asterisk); SEEKCHAR;
+		} else if (CURCHAR == '&') { TYPE(Amperstand); SEEKCHAR;
+		} else if (CURCHAR == ';') { TYPE(Semicolon); SEEKCHAR;
+		} else if (CURCHAR == ',') { TYPE(Comma); SEEKCHAR;
+		} else if (CURCHAR == '.') { TYPE(Dot); SEEKCHAR;
 		} else if (CURCHAR == ':') {
 			TYPE(Colon);
 			if (NEXTCHAR == ':') {
-				TYPE(DoubleColon); ++i;
+				TYPE(DoubleColon); SEEKCHAR;
 			}
-			++i;
+			SEEKCHAR;
 		} else {
-			++i;
+			SEEKCHAR;
 		}
 
 		CURTOK.str.len = i - initial_i;
 	}
 
-	return (signed)tokcount;
+	return (signed)--tokcount;
 }
 #undef NOT_OVERFLOW
 #undef CURCHAR
@@ -114,6 +123,7 @@ tokenize(String input, Token **output)
 #undef CHARPLUS
 #undef CURTOK
 #undef TYPE
+#undef SEEKCHAR
 
 char *
 strTokenType(TokenType type)

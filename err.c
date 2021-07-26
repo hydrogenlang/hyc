@@ -18,30 +18,26 @@
 
 */
 
-#include <str.h>
+#include <err.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
-int
-Strcmp(const String s1, const String s2)
+void
+error(Token *t, const char *fmt, ...)
 {
-	if (s1.len != s2.len)
-		return (int)(s1.len - s2.len);
-	return strncmp(s1.data, s2.data, s1.len);
-}
+	va_list ap;
 
-int
-Strccmp(const String s, const char *cs)
-{
-	if (s.len != strlen(cs))
-		return (int)(s.len - strlen(cs));
-	return strncmp(s.data, cs, s.len);
-}
+	if (t != NULL)
+		fprintf(stderr, "error:%ld:%ld: ",
+				t->line + 1, t->col + 1);
+	else
+		fprintf(stderr, "error: ");
 
-String
-Strdup(const String s)
-{
-	String r = { strncpy(malloc(s.len + 1), s.data, s.len), s.len };
-	r.data[s.len] = 0;
-	return r;
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+
+	fputc('\n', stderr);
+
+	exit(1);
 }
