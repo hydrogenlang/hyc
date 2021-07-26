@@ -165,11 +165,8 @@ tokenstoASTStatementConditional(Tokenizer *t)
 	if (Strccmp(tok->str, "if"))
 		error(tok, "expected 'if' keyword");
 
-	*(stat.Conditional.condition = malloc(sizeof *stat.Conditional.condition))
-		= tokenstoASTExpression(t);
-
-	*(stat.Conditional.body = malloc(sizeof *stat.Conditional.body))
-		= tokenstoASTStatement(t);
+	new(stat.Conditional.condition) = tokenstoASTExpression(t);
+	new(stat.Conditional.body) = tokenstoASTStatement(t);
 
 	return stat;
 }
