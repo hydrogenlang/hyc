@@ -236,7 +236,7 @@ tokenstoASTStatementExpression(Tokenizer *t)
 
 	stat.type = ASTStatementExpression_T;
 	*(stat.Expression.expr = malloc(sizeof *stat.Expression.expr))
-		= tokenstoASTExpressionLiteral(t);
+		= tokenstoASTExpression(t);
 
 	return stat;
 }
@@ -300,6 +300,10 @@ tokenstoASTGlobalFunction(Tokenizer *t)
 	Token *tok;
 
 	global.type = ASTGlobalFunction_T;
+	tok = enextTokenType(t, TokenIdentifier);
+	if (Strccmp(tok->str, "function"))
+		error(tok, "expected 'function' keyword");
+
 	global.Function.name = tokenstoASTExpressionLiteral(t).Literal;
 
 	tok = enextTokenType(t, TokenOpeningParenthesis);
@@ -325,6 +329,7 @@ tokenstoASTModule(Token *tdata, size_t tlen)
 
 	while ((tok = nextTokenType(&t, TokenIdentifier)) != NULL) {
 		if (!Strccmp(tok->str, "function")) {
+			prevToken(&t);
 			pushVector(module, tokenstoASTGlobalFunction(&t));
 		}
 	}
