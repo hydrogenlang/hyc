@@ -91,6 +91,32 @@ enextTokenType(Tokenizer *t, TokenType type)
 /* Expressions */
 
 static ASTExpression
+tokenstoASTExpressionFunctionCall(Tokenizer *t)
+{
+}
+
+static ASTExpression
+tokenstoASTExpressionLiteral(Tokenizer *t)
+{
+	ASTExpression expr;
+	Token *tok;
+	tok = enextToken(t);
+
+	if (tok->type == TokenIdentifier) {
+		expr.type = ASTExpressionLiteralIdentifier_T;
+		expr.Literal.value = Strdup(tok->str).data;
+	} else if (tok->type == TokenInteger) {
+		expr.type = ASTExpressionLiteralInteger_T;
+		expr.Literal.value = Strdup(tok->str).data;
+	} else if (tok->type == TokenString) {
+		expr.type = ASTExpressionLiteralString_T;
+		expr.Literal.value = Strdup(tok->str).data;
+	}
+
+	return expr;
+}
+
+static ASTExpression
 tokenstoASTExpression(Tokenizer *t)
 {
 	ASTExpression expr;
@@ -100,14 +126,14 @@ tokenstoASTExpression(Tokenizer *t)
 	if (0) {
 	/* Literals: */
 	} else if (tok->type == TokenIdentifier) {
-		expr.type = ASTExpressionLiteralIdentifier_T;
-		expr.Literal.value = Strdup(tok->str).data;
+		prevToken(t);
+		expr = tokenstoASTExpressionLiteral(t);
 	} else if (tok->type == TokenInteger) {
-		expr.type = ASTExpressionLiteralInteger_T;
-		expr.Literal.value = Strdup(tok->str).data;
+		prevToken(t);
+		expr = tokenstoASTExpressionLiteral(t);
 	} else if (tok->type == TokenString) {
-		expr.type = ASTExpressionLiteralString_T;
-		expr.Literal.value = Strdup((String){ tok->str.data + 1, tok->str.len - 2}).data;
+		prevToken(t);
+		expr = tokenstoASTExpressionLiteral(t);
 	} else if (tok->type == TokenOpeningParenthesis) {
 		expr = tokenstoASTExpression(t);
 		enextTokenType(t, TokenClosingParenthesis);
@@ -129,6 +155,17 @@ tokenstoASTExpression(Tokenizer *t)
 	} else if (tok->type == TokenMinusMinus) {
 		expr.type = ASTExpressionUnaryPredecrement_T;
 		new(expr.Unary.expr) = tokenstoASTExpression(t);
+	}
+
+	tok = enextToken(t);
+	if (tok->type == TokenOpeningParenthesis) { /* function call */
+		ASTExpression callexpr = expr;
+
+		expr.type = ASTExpressionFunctionCall_T;
+		new(expr.FunctionCall.callexpr) = callexpr;
+		enextTokenType(t, TokenClosingParenthesis);
+	} else {
+		prevToken(t);
 	}
 
 	return expr;
@@ -199,7 +236,7 @@ tokenstoASTStatementExpression(Tokenizer *t)
 
 	stat.type = ASTStatementExpression_T;
 	*(stat.Expression.expr = malloc(sizeof *stat.Expression.expr))
-		= tokenstoASTExpression(t);
+		= tokenstoASTExpressionLiteral(t);
 
 	return stat;
 }
@@ -216,7 +253,7 @@ tokenstoASTStatementInlineAssembly(Tokenizer *t)
 	if (Strccmp(tok->str, "asm"))
 		error(tok, "expected 'asm' keyword");
 
-	stat.InlineAssembly.expr = tokenstoASTExpression(t).Literal;
+	stat.InlineAssembly.expr = tokenstoASTExpressionLiteral(t).Literal;
 
 	tok = enextTokenType(t, TokenSemicolon);
 
@@ -263,7 +300,7 @@ tokenstoASTGlobalFunction(Tokenizer *t)
 	Token *tok;
 
 	global.type = ASTGlobalFunction_T;
-	global.Function.name = tokenstoASTExpression(t).Literal;
+	global.Function.name = tokenstoASTExpressionLiteral(t).Literal;
 
 	tok = enextTokenType(t, TokenOpeningParenthesis);
 	while ((tok = enextToken(t)) != NULL) {

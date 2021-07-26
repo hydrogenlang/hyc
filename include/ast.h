@@ -53,6 +53,7 @@ typedef enum ASTExpressionType {
 	ASTExpressionUnaryValuefrom_T,
 	ASTExpressionUnaryPreincrement_T,
 	ASTExpressionUnaryPredecrement_T,
+	ASTExpressionFunctionCall_T,
 	ASTExpression_Count,
 } ASTExpressionType;
 
@@ -70,6 +71,11 @@ typedef struct ASTExpressionUnary {
 	union ASTExpression *expr;
 } ASTExpressionUnary;
 
+typedef struct ASTExpressionFunctionCall {
+	enum ASTExpressionType type;
+	union ASTExpression *callexpr;
+} ASTExpressionFunctionCall;
+
 typedef union ASTExpression {
 	enum ASTExpressionType type;
 	struct ASTExpressionAny Any;
@@ -81,6 +87,7 @@ typedef union ASTExpression {
 	struct ASTExpressionUnary UnaryValuefrom;
 	struct ASTExpressionUnary UnaryPreincrement;
 	struct ASTExpressionUnary UnaryPredecrement;
+	struct ASTExpressionFunctionCall FunctionCall;
 } ASTExpression;
 
 /**/
