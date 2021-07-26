@@ -168,6 +168,16 @@ strTokenType(TokenType type)
 	case TokenClosingBracket: return "closing bracket"; break;
 	case TokenOpeningBrace: return "opening brace"; break;
 	case TokenClosingBrace: return "closing brace"; break;
+	case TokenExclamationMark: return "exclamation mark"; break;
+	case TokenAssignment: return "assignment sign"; break;
+	case TokenNotEqual: return "not equal sign"; break;
+	case TokenEqual: return "equal sign"; break;
+	case TokenMinus: return "minus sign"; break;
+	case TokenMinusMinus: return "double minus sign"; break;
+	case TokenMinusEqual: return "minus equal sign"; break;
+	case TokenPlus: return "plus sign"; break;
+	case TokenPlusPlus: return "double plus sign"; break;
+	case TokenPlusEqual: return "plus equal sign"; break;
 	case TokenAsterisk: return "asterisk"; break;
 	case TokenAmperstand: return "amperstand"; break;
 	case TokenSemicolon: return "semicolon"; break;
