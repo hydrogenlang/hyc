@@ -134,7 +134,7 @@ tokenstoASTStatementCompound(Tokenizer *t)
 static ASTStatement
 tokenstoASTStatementConditional(Tokenizer *t)
 {
-	/* if <expr> <condition>; */
+	/* if <expr> <statement>; */
 	ASTStatement stat;
 	Token *tok;
 
