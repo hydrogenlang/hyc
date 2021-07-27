@@ -261,6 +261,25 @@ tokenstoASTStatementInlineAssembly(Tokenizer *t)
 }
 
 static ASTStatement
+tokenstoASTStatementVariableDeclaration(Tokenizer *t)
+{
+	/* var <identifier literal>; */
+	ASTStatement stat;
+	Token *tok;
+
+	stat.type = ASTStatementInlineAssembly_T;
+	tok = enextTokenType(t, TokenIdentifier);
+	if (Strccmp(tok->str, "var"))
+		error(tok, "expected 'var' keyword");
+
+	stat.VariableDeclaration.name = tokenstoASTExpressionLiteral(t).Literal;
+
+	tok = enextTokenType(t, TokenSemicolon);
+
+	return stat;
+}
+
+static ASTStatement
 tokenstoASTStatement(Tokenizer *t)
 {
 	ASTStatement stat;
@@ -283,6 +302,9 @@ tokenstoASTStatement(Tokenizer *t)
 	} else if (tok->type == TokenIdentifier && !Strccmp(tok->str, "asm")) {
 		prevToken(t);
 		stat = tokenstoASTStatementInlineAssembly(t);
+	} else if (tok->type == TokenIdentifier && !Strccmp(tok->str, "var")) {
+		prevToken(t);
+		stat = tokenstoASTStatementVariableDeclaration(t);
 	} else {
 		prevToken(t);
 		stat = tokenstoASTStatementExpression(t);

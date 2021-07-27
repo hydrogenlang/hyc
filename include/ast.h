@@ -99,6 +99,7 @@ typedef enum ASTStatementType {
 	ASTStatementReturn_T,
 	ASTStatementExpression_T,
 	ASTStatementInlineAssembly_T,
+	ASTStatementVariableDeclaration_T,
 	ASTStatement_Count,
 } ASTStatementType;
 
@@ -133,6 +134,11 @@ typedef struct ASTStatementInlineAssembly {
 	struct ASTExpressionLiteral expr;
 } ASTStatementInlineAssembly;
 
+typedef struct ASTStatementVariableDeclaration {
+	enum ASTStatementType type;
+	struct ASTExpressionLiteral name;
+} ASTStatementVariableDeclaration;
+
 typedef union ASTStatement {
 	enum ASTStatementType type;
 	struct ASTStatementAny Any;
@@ -141,6 +147,7 @@ typedef union ASTStatement {
 	struct ASTStatementReturn Return;
 	struct ASTStatementExpression Expression;
 	struct ASTStatementInlineAssembly InlineAssembly;
+	struct ASTStatementVariableDeclaration VariableDeclaration;
 } ASTStatement;
 
 /**/
