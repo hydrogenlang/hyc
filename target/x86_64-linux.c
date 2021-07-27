@@ -107,6 +107,8 @@ asmAppend(String *s, char *fmt, ...)
 static void
 compileExpressionLiteralIdentifier(Compiler *compiler, ASTExpressionLiteral expr)
 {
+	/* TODO: Check for identifier in LIT */
+	asmTextAppend(compiler, "\tmov r15, %s", expr.value);
 }
 
 static void
