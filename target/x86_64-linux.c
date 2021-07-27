@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 
+static struct LiteralIdentifier *identifierCheck(ASTExpressionLiteral expr);
 static size_t asmAppend(String *s, char *fmt, ...);
 
 #define asmTextAppend(COMPILER, ...) asmAppend(&((COMPILER)->text), __VA_ARGS__)
@@ -89,8 +90,8 @@ identifierCheck(ASTExpressionLiteral expr)
 	ssize_t i, j;
 	for (i = (signed)(globalLiteralIdentifierTree.len) - 1; i >= 0; ++i) {
 		for (j = 0; j < (signed)(globalLiteralIdentifierTree.data[i].identifiers.len); ++j) {
-			if (!strcmp(expr.value, globalLiteralIdentifierTree.data[i].identifiers.data[j].expr)) {
-				return expr.value, globalLiteralIdentifierTree.data[i].identifiers.data + j;
+			if (!strcmp(expr.value, globalLiteralIdentifierTree.data[i].identifiers.data[j].expr->value)) {
+				return globalLiteralIdentifierTree.data[i].identifiers.data + j;
 			}
 		}
 	}
