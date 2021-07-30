@@ -267,7 +267,7 @@ tokenstoASTStatementVariableDeclaration(Tokenizer *t)
 	ASTStatement stat;
 	Token *tok;
 
-	stat.type = ASTStatementInlineAssembly_T;
+	stat.type = ASTStatementVariableDeclaration_T;
 	tok = enextTokenType(t, TokenIdentifier);
 	if (Strccmp(tok->str, "var"))
 		error(tok, "expected 'var' keyword");

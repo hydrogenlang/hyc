@@ -22,6 +22,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <util.h>
 
 static struct LiteralIdentifier *identifierCheck(ASTExpressionLiteral expr);
 static size_t asmAppend(String *s, char *fmt, ...);
@@ -46,38 +47,105 @@ static void compileStatementConditional(Compiler *compiler, ASTStatementConditio
 static void compileStatementReturn(Compiler *compiler, ASTStatementReturn stat);
 static void compileStatementExpression(Compiler *compiler, ASTStatementExpression stat);
 static void compileStatementInlineAssembly(Compiler *compiler, ASTStatementInlineAssembly stat);
+static void compileStatementVariableDeclaration(Compiler *compiler, ASTStatementVariableDeclaration stat);
 static void compileStatement(Compiler *compiler, union ASTStatement *statement);
 
 static void compileGlobalFunction(Compiler *compiler, ASTGlobalFunction func);
 
 ///////////////////////////////////////////////////////////////////////////////
 
+static char *
+operation_size(size_t size)
+{
+	return
+		size == 1 ? "BYTE"  :
+		size == 2 ? "WORD"  :
+		size == 4 ? "DWORD" :
+		size == 8 ? "QWORD" : "";
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 enum LiteralIdentifierType {
 	LINULL,
-	LIFunction, LIVariable,
+	LIFunction,
+	LIVariableOnStack,
 	LICount
 };
 
-struct LiteralIdentifier {
+static size_t *current_rbp_offset(void);
+
+struct VariableOnStack {
 	enum LiteralIdentifierType type;
-	ASTExpressionLiteral *expr;
+	size_t rbp_offset;
+	size_t size;
+	ASTStatementVariableDeclaration decl;
+};
+static struct VariableOnStack
+newVariableOnStack(size_t size, ASTStatementVariableDeclaration decl)
+{
+	struct VariableOnStack ret;
+	ret.type = LIVariableOnStack;
+	ret.rbp_offset = *(current_rbp_offset()) += size;
+	ret.size = size;
+	ret.decl = decl;
+	return ret;
+}
+
+struct Function {
+	enum LiteralIdentifierType type;
+	ASTGlobalFunction decl;
+};
+static struct Function
+newFunction(ASTGlobalFunction decl)
+{
+	struct Function ret;
+	ret.type = LIFunction;
+	ret.decl = decl;
+	return ret;
+}
+
+union LiteralIdentifierData {
+	enum LiteralIdentifierType type;
+	struct VariableOnStack VariableOnStack;
+	struct Function Function;
 };
 
+struct LiteralIdentifier {
+	union LiteralIdentifierData data;
+	ASTExpressionLiteral iden;
+};
 static struct LiteralIdentifier
-newLiteralIdentifier_p(enum LiteralIdentifierType type, ASTExpressionLiteral *expr)
+newLiteralIdentifierFunction(ASTExpressionLiteral expr, ASTGlobalFunction decl)
 {
-	return (struct LiteralIdentifier){ type, expr };
+	struct LiteralIdentifier ret;
+	ret.data.type = LIFunction;
+	ret.data.Function = newFunction(decl);
+	ret.iden = expr;
+	return ret;
+}
+static struct LiteralIdentifier
+newLiteralIdentifierVariableOnStack(ASTExpressionLiteral expr, ASTStatementVariableDeclaration decl)
+{
+	struct LiteralIdentifier ret;
+	ret.data.type = LIVariableOnStack;
+	ret.data.VariableOnStack = newVariableOnStack(8, decl);
+	ret.iden = expr;
+	return ret;
 }
 
 struct LiteralIdentifierTree {
+	size_t rbp_off;
 	Array(struct LiteralIdentifier) identifiers;
+	Array(struct VariableOnStack) stack;
 };
-
 static struct LiteralIdentifierTree
 newLiteralIdentifierTree(void)
 {
 	struct LiteralIdentifierTree ret;
+	ret.rbp_off = 0;
 	newVector(ret.identifiers);
+	newVector(ret.stack);
 	return ret;
 }
 
@@ -90,12 +158,18 @@ identifierCheck(ASTExpressionLiteral expr)
 	ssize_t i, j;
 	for (i = (signed)(globalLiteralIdentifierTree.len) - 1; i >= 0; ++i) {
 		for (j = 0; j < (signed)(globalLiteralIdentifierTree.data[i].identifiers.len); ++j) {
-			if (!strcmp(expr.value, globalLiteralIdentifierTree.data[i].identifiers.data[j].expr->value)) {
+			if (!strcmp(expr.value, globalLiteralIdentifierTree.data[i].identifiers.data[j].iden.value)) {
 				return globalLiteralIdentifierTree.data[i].identifiers.data + j;
 			}
 		}
 	}
 	return NULL;
+}
+
+static size_t *
+current_rbp_offset(void)
+{
+	return &(lastArray(globalLiteralIdentifierTree).rbp_off);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -122,8 +196,16 @@ asmAppend(String *s, char *fmt, ...)
 static void
 compileExpressionLiteralIdentifier(Compiler *compiler, ASTExpressionLiteral expr)
 {
-	/* TODO: Check for identifier in LIT */
-	asmTextAppend(compiler, "\tmov r15, %s", expr.value);
+	struct LiteralIdentifier *iden;
+	if ((iden = identifierCheck(expr)) == NULL)
+		die("unexpected identifier"); /* TODO: error() */
+	if (iden->data.type == LIFunction) {
+		asmTextAppend(compiler, "\tmov r15, %s", expr.value);
+	} else if (iden->data.type == LIVariableOnStack) {
+		asmTextAppend(compiler, "\tmov %s r15, [rbp-%d]",
+				operation_size(iden->data.VariableOnStack.size),
+				iden->data.VariableOnStack.rbp_offset);
+	}
 }
 
 static void
@@ -255,6 +337,15 @@ compileStatementInlineAssembly(Compiler *compiler, ASTStatementInlineAssembly st
 }
 
 static void
+compileStatementVariableDeclaration(Compiler *compiler, ASTStatementVariableDeclaration stat)
+{
+	asmTextAppend(compiler, "\tsub rsp, 8");
+	pushVector(lastArray(globalLiteralIdentifierTree).identifiers,
+			newLiteralIdentifierVariableOnStack(stat.name, stat));
+	(void)(stat.name.value);
+}
+
+static void
 compileStatement(Compiler *compiler, union ASTStatement *statement)
 {
 	switch (statement->type) {
@@ -275,6 +366,9 @@ compileStatement(Compiler *compiler, union ASTStatement *statement)
 	case ASTStatementInlineAssembly_T:
 		compileStatementInlineAssembly(compiler, statement->InlineAssembly);
 		break;
+	case ASTStatementVariableDeclaration_T:
+		compileStatementVariableDeclaration(compiler, statement->VariableDeclaration);
+		break;
 	default: break;
 	}
 }
@@ -291,7 +385,7 @@ compileGlobalFunction(Compiler *compiler, ASTGlobalFunction func)
 	*/
 
 	pushVector(lastArray(globalLiteralIdentifierTree).identifiers,
-			newLiteralIdentifier_p(LIFunction, &(func.name)));
+			newLiteralIdentifierFunction(func.name, func));
 	asmTextAppend(compiler, "%s:", func.name.value);
 	asmTextAppend(compiler, "\tpush rbp");
 	asmTextAppend(compiler, "\tmov rbp, rsp");
