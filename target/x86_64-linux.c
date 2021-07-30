@@ -255,9 +255,42 @@ compileExpressionUnaryPredecrement(Compiler *compiler, ASTExpressionUnary expr)
 {
 }
 
+static char *
+argumentRegister(size_t argno, char *buf, size_t len)
+{
+	if (argno < 6) {
+		buf[0] = 'r';
+		buf[1] =
+			argno == 0 ? 'd' :
+			argno == 1 ? 's' :
+			argno == 2 ? 'd' :
+			argno == 3 ? 'c' :
+			argno == 4 || argno == 5 ? '4' + argno :
+			'1';
+		buf[2] =
+			argno == 0 || argno == 1 ? 'i' :
+			argno == 2 || argno == 3 ? 'x' :
+			argno == 4 || argno == 5 ? 'd' :
+			'5';
+	}
+	return buf;
+}
+
+static void
+compileExpressionFunctionArgumentList(Compiler *compiler, ASTExpressionFunctionArgumentList expr)
+{
+	size_t i;
+	char data[32];
+	for (i = 0; i < expr.len; ++i) {
+		compileExpression(compiler, expr.data + i);
+		asmTextAppend(compiler, "\tmov %s, r15", argumentRegister(i, data, sizeof data));
+	}
+}
+
 static void
 compileExpressionFunctionCall(Compiler *compiler, ASTExpressionFunctionCall expr)
 {
+	compileExpression(compiler, expr.argv);
 	compileExpression(compiler, expr.callexpr);
 	asmTextAppend(compiler, "\tcall r15\n\tmov r15, rax");
 }
@@ -292,6 +325,9 @@ compileExpression(Compiler *compiler, union ASTExpression *expression)
 		break;
 	case ASTExpressionUnaryPredecrement_T:
 		compileExpressionUnaryPredecrement(compiler, expression->Unary);
+		break;
+	case ASTExpressionFunctionArgumentList_T:
+		compileExpressionFunctionArgumentList(compiler, expression->FunctionArgumentList);
 		break;
 	case ASTExpressionFunctionCall_T:
 		compileExpressionFunctionCall(compiler, expression->FunctionCall);
