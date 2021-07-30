@@ -272,6 +272,7 @@ argumentRegister(size_t argno, char *buf, size_t len)
 			argno == 2 || argno == 3 ? 'x' :
 			argno == 4 || argno == 5 ? 'd' :
 			'5';
+		buf[3] = '\0';
 	}
 	return buf;
 }
