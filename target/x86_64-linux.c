@@ -251,6 +251,8 @@ compileExpressionUnaryAddressof(Compiler *compiler, ASTExpressionUnary expr)
 static void
 compileExpressionUnaryValuefrom(Compiler *compiler, ASTExpressionUnary expr)
 {
+	compileExpression(compiler, expr.expr);
+	asmTextAppend(compiler, "\tmov r15, [r15]");
 }
 
 static void
