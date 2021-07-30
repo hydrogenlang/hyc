@@ -38,6 +38,16 @@ static Token *nextTokenType(Tokenizer *t, TokenType type);
 static Token *enextToken(Tokenizer *t);
 static Token *enextTokenType(Tokenizer *t, TokenType type);
 
+static ASTExpression tokenstoASTExpressionLiteral(Tokenizer *t);
+static ASTExpression tokenstoASTExpressionFunctionArgumentList(Tokenizer *t);
+static ASTExpression tokenstoASTExpression(Tokenizer *t);
+
+static ASTStatement tokenstoASTStatementCompound(Tokenizer *t);
+static ASTStatement tokenstoASTStatementConditional(Tokenizer *t);
+static ASTStatement tokenstoASTStatementReturn(Tokenizer *t);
+static ASTStatement tokenstoASTStatementExpression(Tokenizer *t);
+static ASTStatement tokenstoASTStatementInlineAssembly(Tokenizer *t);
+static ASTStatement tokenstoASTStatementVariableDeclaration(Tokenizer *t);
 static ASTStatement tokenstoASTStatement(Tokenizer *t);
 
 static ASTGlobal tokenstoASTGlobalFunction(Tokenizer *t);
@@ -91,11 +101,6 @@ enextTokenType(Tokenizer *t, TokenType type)
 /* Expressions */
 
 static ASTExpression
-tokenstoASTExpressionFunctionCall(Tokenizer *t)
-{
-}
-
-static ASTExpression
 tokenstoASTExpressionLiteral(Tokenizer *t)
 {
 	ASTExpression expr;
@@ -114,6 +119,25 @@ tokenstoASTExpressionLiteral(Tokenizer *t)
 	}
 
 	return expr;
+}
+
+static ASTExpression
+tokenstoASTExpressionFunctionArgumentList(Tokenizer *t)
+{
+	ASTExpression expr;
+	Token *tok;
+
+	newVector(expr.FunctionArgumentList);
+	enextTokenType(t, TokenOpeningParenthesis);
+
+	if ((tok = enextToken(t))->type != TokenClosingParenthesis) {
+		prevToken(t);
+		do {
+			pushVector(expr.FunctionArgumentList, tokenstoASTExpression(t));
+		} while ((tok = enextToken(t))->type == TokenComma);
+		prevToken(t);
+		enextTokenType(t, TokenClosingParenthesis);
+	}
 }
 
 static ASTExpression
@@ -155,15 +179,19 @@ tokenstoASTExpression(Tokenizer *t)
 	} else if (tok->type == TokenMinusMinus) {
 		expr.type = ASTExpressionUnaryPredecrement_T;
 		new(expr.Unary.expr) = tokenstoASTExpression(t);
+	} else {
+		error(tok, "unexpected token: '%s'", strTokenType(tok->type));
 	}
 
 	tok = enextToken(t);
 	if (tok->type == TokenOpeningParenthesis) { /* function call */
 		ASTExpression callexpr = expr;
 
+		prevToken(t);
 		expr.type = ASTExpressionFunctionCall_T;
 		new(expr.FunctionCall.callexpr) = callexpr;
-		enextTokenType(t, TokenClosingParenthesis);
+		new(expr.FunctionCall.argv) =
+			tokenstoASTExpressionFunctionArgumentList(t).FunctionArgumentList;
 	} else {
 		prevToken(t);
 	}
