@@ -218,9 +218,9 @@ static void
 compileExpressionLiteralString(Compiler *compiler, ASTExpressionLiteral expr)
 {
 	pushVector(literalStrings, &expr);
-	asmDataAppend(compiler, "\t.STR%d: db \"%s\"",
+	asmDataAppend(compiler, "\tSTR.%d: db \"%s\"",
 			literalStrings.len - 1, expr.value);
-	asmTextAppend(compiler, "\tmov r15, .STR%d", literalStrings.len - 1);
+	asmTextAppend(compiler, "\tmov r15, STR.%d", literalStrings.len - 1);
 }
 
 static void
