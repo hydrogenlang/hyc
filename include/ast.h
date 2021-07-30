@@ -73,6 +73,7 @@ typedef struct ASTExpressionUnary {
 } ASTExpressionUnary;
 
 typedef struct ASTExpressionFunctionArgumentList {
+	enum ASTExpressionType type;
 	union ASTExpression *data;
 	size_t len;
 } ASTExpressionFunctionArgumentList;
