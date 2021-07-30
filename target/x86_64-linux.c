@@ -350,6 +350,9 @@ compileExpression(Compiler *compiler, union ASTExpression *expression)
 	case ASTExpressionFunctionCall_T:
 		compileExpressionFunctionCall(compiler, expression->FunctionCall);
 		break;
+	case ASTExpressionBinaryAssignment_T:
+		compileExpressionBinaryAssignment(compiler, expression->Binary);
+		break;
 	default: break;
 	}
 }
