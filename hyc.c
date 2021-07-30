@@ -108,21 +108,8 @@ main(int argc, char *argv[])
 		if ((signed)(s.len = (unsigned)mapfile(argv[i], &(s.data))) < 0)
 			die("mapfile(%s):", argv[i]);
 
-		/* write(STDOUT_FILENO, s.data, s.len); */
-
 		if ((signed)(tokens.len = (unsigned)tokenize(s, &tokens.data)) < 0)
 			die("tokenize(%s):", argv[i]);
-
-		/*
-		{
-			size_t j;
-			for (j = 0; j < tokens.len; ++j) {
-				printf("[%4ld]: %s | \"%.*s\"\n",
-						j, strTokenType(tokens.data[j].type),
-						(int)tokens.data[j].str.len, tokens.data[j].str.data);
-			}
-		}
-		*/
 
 		module = tokenstoASTModule(tokens.data, tokens.len);
 		compiler = compileModule(module);
