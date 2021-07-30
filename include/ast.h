@@ -81,7 +81,7 @@ typedef struct ASTExpressionFunctionArgumentList {
 typedef struct ASTExpressionFunctionCall {
 	enum ASTExpressionType type;
 	union ASTExpression *callexpr;
-	struct ASTExpressionFunctionArgumentList *argv;
+	union ASTExpression *argv;
 } ASTExpressionFunctionCall;
 
 typedef union ASTExpression {

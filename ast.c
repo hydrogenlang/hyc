@@ -194,7 +194,7 @@ tokenstoASTExpression(Tokenizer *t)
 		expr.type = ASTExpressionFunctionCall_T;
 		new(expr.FunctionCall.callexpr) = callexpr;
 		new(expr.FunctionCall.argv) =
-			tokenstoASTExpressionFunctionArgumentList(t).FunctionArgumentList;
+			tokenstoASTExpressionFunctionArgumentList(t);
 	} else {
 		prevToken(t);
 	}
