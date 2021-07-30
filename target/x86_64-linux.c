@@ -238,6 +238,14 @@ compileExpressionUnarySignChange(Compiler *compiler, ASTExpressionUnary expr)
 static void
 compileExpressionUnaryAddressof(Compiler *compiler, ASTExpressionUnary expr)
 {
+	switch (expr.expr->type) {
+	case ASTExpressionLiteralIdentifier_T:
+		compileExpressionLiteralIdentifier(compiler, expr.expr->Literal, 1);
+		break;
+	default:
+		die("cannot get address of expression which is not lvalue"); /* TODO: error() */
+		break;
+	}
 }
 
 static void
