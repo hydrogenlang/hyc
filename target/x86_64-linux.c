@@ -293,7 +293,10 @@ compileGlobalFunction(Compiler *compiler, ASTGlobalFunction func)
 	pushVector(lastArray(globalLiteralIdentifierTree).identifiers,
 			newLiteralIdentifier_p(LIFunction, &(func.name)));
 	asmTextAppend(compiler, "%s:", func.name.value);
+	asmTextAppend(compiler, "\tpush rbp");
+	asmTextAppend(compiler, "\tmov rbp, rsp");
 	compileStatement(compiler, func.body);
+	asmTextAppend(compiler, "\tleave");
 	asmTextAppend(compiler, "\tret");
 }
 
