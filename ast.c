@@ -127,6 +127,7 @@ tokenstoASTExpressionFunctionArgumentList(Tokenizer *t)
 	ASTExpression expr;
 	Token *tok;
 
+	expr.type = ASTExpressionFunctionArgumentList_T;
 	newVector(expr.FunctionArgumentList);
 	enextTokenType(t, TokenOpeningParenthesis);
 
@@ -138,6 +139,8 @@ tokenstoASTExpressionFunctionArgumentList(Tokenizer *t)
 		prevToken(t);
 		enextTokenType(t, TokenClosingParenthesis);
 	}
+
+	return expr;
 }
 
 static ASTExpression
