@@ -30,7 +30,7 @@ static size_t asmAppend(String *s, char *fmt, ...);
 #define asmTextAppend(COMPILER, ...) asmAppend(&((COMPILER)->text), __VA_ARGS__)
 #define asmDataAppend(COMPILER, ...) asmAppend(&((COMPILER)->data), __VA_ARGS__)
 
-static void compileExpressionLiteralIdentifier(Compiler *compiler, ASTExpressionLiteral expr);
+static void compileExpressionLiteralIdentifier(Compiler *compiler, ASTExpressionLiteral expr, int address);
 static void compileExpressionLiteralInteger(Compiler *compiler, ASTExpressionLiteral expr);
 static void compileExpressionLiteralString(Compiler *compiler, ASTExpressionLiteral expr);
 static void compileExpressionUnaryNegation(Compiler *compiler, ASTExpressionUnary expr);
@@ -194,15 +194,15 @@ asmAppend(String *s, char *fmt, ...)
 /* Expressions ***************************************************************/
 
 static void
-compileExpressionLiteralIdentifier(Compiler *compiler, ASTExpressionLiteral expr)
+compileExpressionLiteralIdentifier(Compiler *compiler, ASTExpressionLiteral expr, int address)
 {
 	struct LiteralIdentifier *iden;
 	if ((iden = identifierCheck(expr)) == NULL)
 		die("unexpected identifier"); /* TODO: error() */
 	if (iden->data.type == LIFunction) {
-		asmTextAppend(compiler, "\tmov r15, %s", expr.value);
+		asmTextAppend(compiler, "\t%s r15, %s", address ? "lea" : "mov", expr.value);
 	} else if (iden->data.type == LIVariableOnStack) {
-		asmTextAppend(compiler, "\tmov %s r15, [rbp-%d]",
+		asmTextAppend(compiler, "\t%s %s r15, [rbp-%d]", address ? "lea" : "mov",
 				operation_size(iden->data.VariableOnStack.size),
 				iden->data.VariableOnStack.rbp_offset);
 	}
@@ -297,11 +297,20 @@ compileExpressionFunctionCall(Compiler *compiler, ASTExpressionFunctionCall expr
 }
 
 static void
+compileExpressionBinaryAssignment(Compiler *compiler, ASTExpressionBinary expr)
+{
+	compileExpression(compiler, expr.right);
+	asmTextAppend(compiler, "\tmov rax, r15");
+	compileExpression(compiler, expr.left);
+	asmTextAppend(compiler, "\tmov [r15], rax");
+}
+
+static void
 compileExpression(Compiler *compiler, union ASTExpression *expression)
 {
 	switch (expression->type) {
 	case ASTExpressionLiteralIdentifier_T:
-		compileExpressionLiteralIdentifier(compiler, expression->Literal);
+		compileExpressionLiteralIdentifier(compiler, expression->Literal, 0);
 		break;
 	case ASTExpressionLiteralInteger_T:
 		compileExpressionLiteralInteger(compiler, expression->Literal);
