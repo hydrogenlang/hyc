@@ -244,7 +244,7 @@ tokenstoASTStatementConditional(Tokenizer *t)
 	new(stat.Conditional.body) = tokenstoASTStatement(t);
 
 	tok = enextToken(t);
-	if (tok->type == TokenIdentifier && Strccmp(tok->str, "else"))
+	if (tok->type == TokenIdentifier && !Strccmp(tok->str, "else"))
 		new(stat.Conditional.elsebody) = tokenstoASTStatement(t);
 	else {
 		prevToken(t); stat.Conditional.elsebody = NULL;
