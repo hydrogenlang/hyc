@@ -47,7 +47,7 @@ static ASTStatement tokenstoASTStatementConditional(Tokenizer *t);
 static ASTStatement tokenstoASTStatementReturn(Tokenizer *t);
 static ASTStatement tokenstoASTStatementExpression(Tokenizer *t);
 static ASTStatement tokenstoASTStatementInlineAssembly(Tokenizer *t);
-static ASTStatement tokenstoASTStatementVariableDeclaration(Tokenizer *t);
+static ASTStatement tokenstoASTStatementVariableDeclaration(Tokenizer *t, int seek);
 static ASTStatement tokenstoASTStatement(Tokenizer *t);
 
 static ASTGlobal tokenstoASTGlobalFunction(Tokenizer *t);
@@ -260,8 +260,6 @@ tokenstoASTStatementReturn(Tokenizer *t)
 
 	*(stat.Return.expr = malloc(sizeof *stat.Return.expr)) = tokenstoASTExpression(t);
 
-	tok = enextTokenType(t, TokenSemicolon);
-
 	return stat;
 }
 
@@ -292,26 +290,24 @@ tokenstoASTStatementInlineAssembly(Tokenizer *t)
 
 	stat.InlineAssembly.expr = tokenstoASTExpressionLiteral(t).Literal;
 
-	tok = enextTokenType(t, TokenSemicolon);
-
 	return stat;
 }
 
 static ASTStatement
-tokenstoASTStatementVariableDeclaration(Tokenizer *t)
+tokenstoASTStatementVariableDeclaration(Tokenizer *t, int seek)
 {
 	/* var <identifier literal>; */
 	ASTStatement stat;
 	Token *tok;
 
 	stat.type = ASTStatementVariableDeclaration_T;
-	tok = enextTokenType(t, TokenIdentifier);
-	if (Strccmp(tok->str, "var"))
-		error(tok, "expected 'var' keyword");
+	if (!seek) {
+		tok = enextTokenType(t, TokenIdentifier);
+		if (Strccmp(tok->str, "var"))
+			error(tok, "expected 'var' keyword");
+	}
 
 	stat.VariableDeclaration.name = tokenstoASTExpressionLiteral(t).Literal;
-
-	tok = enextTokenType(t, TokenSemicolon);
 
 	return stat;
 }
@@ -336,12 +332,14 @@ tokenstoASTStatement(Tokenizer *t)
 	} else if (tok->type == TokenIdentifier && !Strccmp(tok->str, "return")) {
 		prevToken(t);
 		stat = tokenstoASTStatementReturn(t);
+		tok = enextTokenType(t, TokenSemicolon);
 	} else if (tok->type == TokenIdentifier && !Strccmp(tok->str, "asm")) {
 		prevToken(t);
 		stat = tokenstoASTStatementInlineAssembly(t);
+		tok = enextTokenType(t, TokenSemicolon);
 	} else if (tok->type == TokenIdentifier && !Strccmp(tok->str, "var")) {
-		prevToken(t);
-		stat = tokenstoASTStatementVariableDeclaration(t);
+		stat = tokenstoASTStatementVariableDeclaration(t, 1);
+		tok = enextTokenType(t, TokenSemicolon);
 	} else {
 		prevToken(t);
 		stat = tokenstoASTStatementExpression(t);
@@ -359,6 +357,7 @@ tokenstoASTGlobalFunction(Tokenizer *t)
 	Token *tok;
 
 	global.type = ASTGlobalFunction_T;
+	newVector(global.Function.parameters);
 	tok = enextTokenType(t, TokenIdentifier);
 	if (Strccmp(tok->str, "function"))
 		error(tok, "expected 'function' keyword");
@@ -366,10 +365,14 @@ tokenstoASTGlobalFunction(Tokenizer *t)
 	global.Function.name = tokenstoASTExpressionLiteral(t).Literal;
 
 	tok = enextTokenType(t, TokenOpeningParenthesis);
-	while ((tok = enextToken(t)) != NULL) {
-		/* TODO: parameters */
-		if (tok->type == TokenClosingParenthesis)
-			break;
+	if ((tok = enextToken(t))->type != TokenClosingParenthesis) {
+		prevToken(t);
+		do {
+			pushVector(global.Function.parameters,
+					tokenstoASTStatementVariableDeclaration(t, 1).VariableDeclaration);
+		} while ((tok = enextToken(t))->type == TokenComma);
+		prevToken(t);
+		enextTokenType(t, TokenClosingParenthesis);
 	}
 
 	new(global.Function.body) = tokenstoASTStatement(t);
