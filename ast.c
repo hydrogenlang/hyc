@@ -231,7 +231,7 @@ tokenstoASTStatementCompound(Tokenizer *t)
 static ASTStatement
 tokenstoASTStatementConditional(Tokenizer *t)
 {
-	/* if <expr> <statement>; */
+	/* if <expr> <statement> [else <statement>]; */
 	ASTStatement stat;
 	Token *tok;
 
@@ -242,6 +242,13 @@ tokenstoASTStatementConditional(Tokenizer *t)
 
 	new(stat.Conditional.condition) = tokenstoASTExpression(t);
 	new(stat.Conditional.body) = tokenstoASTStatement(t);
+
+	tok = enextToken(t);
+	if (tok->type == TokenIdentifier && Strccmp(tok->str, "else"))
+		new(stat.Conditional.elsebody) = tokenstoASTStatement(t);
+	else {
+		prevToken(t); stat.Conditional.elsebody = NULL;
+	}
 
 	return stat;
 }

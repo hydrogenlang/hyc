@@ -134,7 +134,7 @@ typedef struct ASTStatementCompound {
 typedef struct ASTStatementConditional {
 	enum ASTStatementType type;
 	union ASTExpression *condition;
-	union ASTStatement *body;
+	union ASTStatement *body, *elsebody;
 } ASTStatementConditional;
 
 typedef struct ASTStatementReturn {
