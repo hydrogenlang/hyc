@@ -196,17 +196,11 @@ tokenstoASTExpression(Tokenizer *t)
 		new(expr.FunctionCall.argv) =
 			tokenstoASTExpressionFunctionArgumentList(t);
 	} else if (tok->type == TokenAssignment) { /* assignment */
+		ASTExpression left = expr;
 		ASTExpression right = tokenstoASTExpression(t);
-		ASTExpression left = {
-			.Unary = {
-				.type = ASTExpressionUnaryAddressof_T,
-				.expr = malloc(sizeof left.Unary.expr)
-			}
-		};
-		*(left.Unary.expr) = expr;
 		expr.type = ASTExpressionBinaryAssignment_T;
-		new(expr.BinaryAssignment.right) = right;
 		new(expr.BinaryAssignment.left) = left;
+		new(expr.BinaryAssignment.right) = right;
 	} else {
 		prevToken(t);
 	}

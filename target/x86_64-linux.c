@@ -30,17 +30,17 @@ static size_t asmAppend(String *s, char *fmt, ...);
 #define asmTextAppend(COMPILER, ...) asmAppend(&((COMPILER)->text), __VA_ARGS__)
 #define asmDataAppend(COMPILER, ...) asmAppend(&((COMPILER)->data), __VA_ARGS__)
 
-static void compileExpressionLiteralIdentifier(Compiler *compiler, ASTExpressionLiteral expr, int address);
-static void compileExpressionLiteralInteger(Compiler *compiler, ASTExpressionLiteral expr);
-static void compileExpressionLiteralString(Compiler *compiler, ASTExpressionLiteral expr);
-static void compileExpressionUnaryNegation(Compiler *compiler, ASTExpressionUnary expr);
-static void compileExpressionUnarySignChange(Compiler *compiler, ASTExpressionUnary expr);
-static void compileExpressionUnaryAddressof(Compiler *compiler, ASTExpressionUnary expr);
-static void compileExpressionUnaryValuefrom(Compiler *compiler, ASTExpressionUnary expr);
-static void compileExpressionUnaryPreincrement(Compiler *compiler, ASTExpressionUnary expr);
-static void compileExpressionUnaryPredecrement(Compiler *compiler, ASTExpressionUnary expr);
-static void compileExpressionFunctionCall(Compiler *compiler, ASTExpressionFunctionCall expr);
-static void compileExpression(Compiler *compiler, union ASTExpression *expression);
+static void compileExpressionLiteralIdentifier(Compiler *compiler, ASTExpressionLiteral expr, int lvalue);
+static void compileExpressionLiteralInteger(Compiler *compiler, ASTExpressionLiteral expr, int lvalue);
+static void compileExpressionLiteralString(Compiler *compiler, ASTExpressionLiteral expr, int lvalue);
+static void compileExpressionUnaryNegation(Compiler *compiler, ASTExpressionUnary expr, int lvalue);
+static void compileExpressionUnarySignChange(Compiler *compiler, ASTExpressionUnary expr, int lvalue);
+static void compileExpressionUnaryAddressof(Compiler *compiler, ASTExpressionUnary expr, int lvalue);
+static void compileExpressionUnaryValuefrom(Compiler *compiler, ASTExpressionUnary expr, int lvalue);
+static void compileExpressionUnaryPreincrement(Compiler *compiler, ASTExpressionUnary expr, int lvalue);
+static void compileExpressionUnaryPredecrement(Compiler *compiler, ASTExpressionUnary expr, int lvalue);
+static void compileExpressionFunctionCall(Compiler *compiler, ASTExpressionFunctionCall expr, int lvalue);
+static void compileExpression(Compiler *compiler, union ASTExpression *expression, int lvalue);
 
 static void compileStatementCompound(Compiler *compiler, ASTStatementCompound stat);
 static void compileStatementConditional(Compiler *compiler, ASTStatementConditional stat);
@@ -194,29 +194,31 @@ asmAppend(String *s, char *fmt, ...)
 /* Expressions ***************************************************************/
 
 static void
-compileExpressionLiteralIdentifier(Compiler *compiler, ASTExpressionLiteral expr, int address)
+compileExpressionLiteralIdentifier(Compiler *compiler, ASTExpressionLiteral expr, int lvalue)
 {
 	struct LiteralIdentifier *iden;
 	if ((iden = identifierCheck(expr)) == NULL)
 		die("unexpected identifier"); /* TODO: error() */
 	if (iden->data.type == LIFunction) {
-		asmTextAppend(compiler, "\t%s r15, %s", address ? "lea" : "mov", expr.value);
+		asmTextAppend(compiler, "\t%s r15, %s", lvalue ? "lea" : "mov", expr.value);
 	} else if (iden->data.type == LIVariableOnStack) {
-		asmTextAppend(compiler, "\t%s %s r15, [rbp-%d]", address ? "lea" : "mov",
+		asmTextAppend(compiler, "\t%s %s r15, [rbp-%d]", lvalue ? "lea" : "mov",
 				operation_size(iden->data.VariableOnStack.size),
 				iden->data.VariableOnStack.rbp_offset);
 	}
 }
 
 static void
-compileExpressionLiteralInteger(Compiler *compiler, ASTExpressionLiteral expr)
+compileExpressionLiteralInteger(Compiler *compiler, ASTExpressionLiteral expr, int lvalue)
 {
+	if (lvalue) die("Integer is not lvalue"); /* TODO: error() */
 	asmTextAppend(compiler, "\tmov r15, %s", expr.value);
 }
 
 static void
-compileExpressionLiteralString(Compiler *compiler, ASTExpressionLiteral expr)
+compileExpressionLiteralString(Compiler *compiler, ASTExpressionLiteral expr, int lvalue)
 {
+	if (lvalue) die("String is not lvalue"); /* TODO: error() */
 	pushVector(literalStrings, &expr);
 	asmDataAppend(compiler, "\tSTR.%d: db \"%s\"",
 			literalStrings.len - 1, expr.value);
@@ -224,20 +226,22 @@ compileExpressionLiteralString(Compiler *compiler, ASTExpressionLiteral expr)
 }
 
 static void
-compileExpressionUnaryNegation(Compiler *compiler, ASTExpressionUnary expr)
+compileExpressionUnaryNegation(Compiler *compiler, ASTExpressionUnary expr, int lvalue)
 {
 }
 
 static void
-compileExpressionUnarySignChange(Compiler *compiler, ASTExpressionUnary expr)
+compileExpressionUnarySignChange(Compiler *compiler, ASTExpressionUnary expr, int lvalue)
 {
-	compileExpression(compiler, expr.expr);
+	if (lvalue) die("Sign Change operation will not give lvalue"); /* TODO: error() */
+	compileExpression(compiler, expr.expr, 0);
 	asmTextAppend(compiler, "\tneg r15");
 }
 
 static void
-compileExpressionUnaryAddressof(Compiler *compiler, ASTExpressionUnary expr)
+compileExpressionUnaryAddressof(Compiler *compiler, ASTExpressionUnary expr, int lvalue)
 {
+	if (lvalue) die("Address is not lvalue"); /* TODO: error() */
 	switch (expr.expr->type) {
 	case ASTExpressionLiteralIdentifier_T:
 		compileExpressionLiteralIdentifier(compiler, expr.expr->Literal, 1);
@@ -249,19 +253,19 @@ compileExpressionUnaryAddressof(Compiler *compiler, ASTExpressionUnary expr)
 }
 
 static void
-compileExpressionUnaryValuefrom(Compiler *compiler, ASTExpressionUnary expr)
+compileExpressionUnaryValuefrom(Compiler *compiler, ASTExpressionUnary expr, int lvalue)
 {
-	compileExpression(compiler, expr.expr);
-	asmTextAppend(compiler, "\tmov r15, [r15]");
+	compileExpression(compiler, expr.expr, 0);
+	asmTextAppend(compiler, "\t%s r15, [r15]", lvalue ? "lea" : "mov");
 }
 
 static void
-compileExpressionUnaryPreincrement(Compiler *compiler, ASTExpressionUnary expr)
+compileExpressionUnaryPreincrement(Compiler *compiler, ASTExpressionUnary expr, int lvalue)
 {
 }
 
 static void
-compileExpressionUnaryPredecrement(Compiler *compiler, ASTExpressionUnary expr)
+compileExpressionUnaryPredecrement(Compiler *compiler, ASTExpressionUnary expr, int lvalue)
 {
 }
 
@@ -288,72 +292,76 @@ argumentRegister(size_t argno, char *buf, size_t len)
 }
 
 static void
-compileExpressionFunctionArgumentList(Compiler *compiler, ASTExpressionFunctionArgumentList expr)
+compileExpressionFunctionArgumentList(Compiler *compiler, ASTExpressionFunctionArgumentList expr, int lvalue)
 {
 	size_t i;
 	char data[32];
+	if (lvalue) die("Function Argument List is not lvalue"); /* TODO: error() */
 	for (i = 0; i < expr.len; ++i) {
-		compileExpression(compiler, expr.data + i);
+		compileExpression(compiler, expr.data + i, 0);
 		asmTextAppend(compiler, "\tmov %s, r15", argumentRegister(i, data, sizeof data));
 	}
 }
 
 static void
-compileExpressionFunctionCall(Compiler *compiler, ASTExpressionFunctionCall expr)
+compileExpressionFunctionCall(Compiler *compiler, ASTExpressionFunctionCall expr, int lvalue)
 {
-	compileExpression(compiler, expr.argv);
-	compileExpression(compiler, expr.callexpr);
+	if (lvalue) die("Function Call is not lvalue"); /* TODO: error() */
+	compileExpression(compiler, expr.argv, 0);
+	compileExpression(compiler, expr.callexpr, 0);
 	asmTextAppend(compiler, "\tcall r15\n\tmov r15, rax");
 }
 
 static void
-compileExpressionBinaryAssignment(Compiler *compiler, ASTExpressionBinary expr)
+compileExpressionBinaryAssignment(Compiler *compiler, ASTExpressionBinary expr, int lvalue)
 {
-	compileExpression(compiler, expr.right);
+	compileExpression(compiler, expr.right, 0);
 	asmTextAppend(compiler, "\tmov rax, r15");
-	compileExpression(compiler, expr.left);
+	compileExpression(compiler, expr.left, 1);
 	asmTextAppend(compiler, "\tmov [r15], rax");
+	if (!lvalue)
+		asmTextAppend(compiler, "\tmov r15, [r15]");
 }
 
 static void
-compileExpression(Compiler *compiler, union ASTExpression *expression)
+compileExpression(Compiler *compiler, union ASTExpression *expression, int lvalue)
 {
 	switch (expression->type) {
 	case ASTExpressionLiteralIdentifier_T:
-		compileExpressionLiteralIdentifier(compiler, expression->Literal, 0);
+		compileExpressionLiteralIdentifier(compiler, expression->Literal, lvalue);
 		break;
 	case ASTExpressionLiteralInteger_T:
-		compileExpressionLiteralInteger(compiler, expression->Literal);
+		compileExpressionLiteralInteger(compiler, expression->Literal, lvalue);
 		break;
 	case ASTExpressionLiteralString_T:
-		compileExpressionLiteralString(compiler, expression->Literal);
+		compileExpressionLiteralString(compiler, expression->Literal, lvalue);
 		break;
 	case ASTExpressionUnaryNegation_T:
-		compileExpressionUnaryNegation(compiler, expression->Unary);
+		compileExpressionUnaryNegation(compiler, expression->Unary, lvalue);
 		break;
 	case ASTExpressionUnarySignChange_T:
-		compileExpressionUnarySignChange(compiler, expression->Unary);
+		compileExpressionUnarySignChange(compiler, expression->Unary, lvalue);
 		break;
 	case ASTExpressionUnaryAddressof_T:
-		compileExpressionUnaryAddressof(compiler, expression->Unary);
+		compileExpressionUnaryAddressof(compiler, expression->Unary, lvalue);
 		break;
 	case ASTExpressionUnaryValuefrom_T:
-		compileExpressionUnaryValuefrom(compiler, expression->Unary);
+		compileExpressionUnaryValuefrom(compiler, expression->Unary, lvalue);
 		break;
 	case ASTExpressionUnaryPreincrement_T:
-		compileExpressionUnaryPreincrement(compiler, expression->Unary);
+		compileExpressionUnaryPreincrement(compiler, expression->Unary, lvalue);
 		break;
 	case ASTExpressionUnaryPredecrement_T:
-		compileExpressionUnaryPredecrement(compiler, expression->Unary);
+		compileExpressionUnaryPredecrement(compiler, expression->Unary, lvalue);
 		break;
 	case ASTExpressionFunctionArgumentList_T:
-		compileExpressionFunctionArgumentList(compiler, expression->FunctionArgumentList);
+		compileExpressionFunctionArgumentList(compiler, expression->FunctionArgumentList, lvalue);
 		break;
 	case ASTExpressionFunctionCall_T:
-		compileExpressionFunctionCall(compiler, expression->FunctionCall);
+		compileExpressionFunctionCall(compiler, expression->FunctionCall, lvalue);
 		break;
 	case ASTExpressionBinaryAssignment_T:
-		compileExpressionBinaryAssignment(compiler, expression->Binary);
+		compileExpressionBinaryAssignment(compiler, expression->Binary, lvalue);
 		break;
 	default: break;
 	}
@@ -378,7 +386,7 @@ compileStatementConditional(Compiler *compiler, ASTStatementConditional stat)
 static void
 compileStatementReturn(Compiler *compiler, ASTStatementReturn stat)
 {
-	compileExpression(compiler, stat.expr);
+	compileExpression(compiler, stat.expr, 0);
 	asmTextAppend(compiler, "\tmov rax, r15");
 	asmTextAppend(compiler, "\tret");
 }
@@ -386,7 +394,7 @@ compileStatementReturn(Compiler *compiler, ASTStatementReturn stat)
 static void
 compileStatementExpression(Compiler *compiler, ASTStatementExpression stat)
 {
-	compileExpression(compiler, stat.expr);
+	compileExpression(compiler, stat.expr, 0);
 }
 
 static void
