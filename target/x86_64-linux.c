@@ -151,6 +151,7 @@ newLiteralIdentifierTree(void)
 
 static Array(struct LiteralIdentifierTree) globalLiteralIdentifierTree;
 static Array(ASTExpressionLiteral *) literalStrings;
+static int ifcnt;
 
 static struct LiteralIdentifier *
 identifierCheck(ASTExpressionLiteral expr)
@@ -386,7 +387,23 @@ compileStatementCompound(Compiler *compiler, ASTStatementCompound stat)
 static void
 compileStatementConditional(Compiler *compiler, ASTStatementConditional stat)
 {
-	/* TODO! */
+	int iifcnt = ifcnt;
+	compileExpression(compiler, stat.condition, 0);
+	asmTextAppend(compiler, "\tcmp r15, 0");
+	if (stat.elsebody == NULL) {
+		++ifcnt;
+		asmTextAppend(compiler, "\tje .IF.%d", iifcnt);
+		compileStatement(compiler, stat.body);
+		asmTextAppend(compiler, ".IF.%d:", iifcnt);
+	} else {
+		ifcnt += 2;
+		asmTextAppend(compiler, "\tje .IF.%d", iifcnt);
+		compileStatement(compiler, stat.body);
+		asmTextAppend(compiler, "\tjmp .IF.%d", iifcnt + 1);
+		asmTextAppend(compiler, ".IF.%d:", iifcnt);
+		compileStatement(compiler, stat.elsebody);
+		asmTextAppend(compiler, ".IF.%d:", iifcnt + 1);
+	}
 }
 
 static void
@@ -459,6 +476,7 @@ compileGlobalFunction(Compiler *compiler, ASTGlobalFunction func)
 
 	pushVector(lastArray(globalLiteralIdentifierTree).identifiers,
 			newLiteralIdentifierFunction(func.name, func));
+	/* TODO: parameters */
 	asmTextAppend(compiler, "%s:", func.name.value);
 	asmTextAppend(compiler, "\tpush rbp");
 	asmTextAppend(compiler, "\tmov rbp, rsp");
@@ -479,6 +497,7 @@ compileModule(ASTModule module)
 	/* initialization of global containers */
 	newVector(globalLiteralIdentifierTree);
 	newVector(literalStrings);
+	ifcnt = 0;
 
 	pushVector(globalLiteralIdentifierTree, newLiteralIdentifierTree());
 
