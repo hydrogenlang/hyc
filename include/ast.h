@@ -183,6 +183,10 @@ typedef struct ASTGlobalAny {
 typedef struct ASTGlobalFunction {
 	enum ASTGlobalType type;
 	struct ASTExpressionLiteral name;
+	struct {
+		struct ASTStatementVariableDeclaration *data;
+		size_t len;
+	} parameters;
 	union ASTStatement *body;
 } ASTGlobalFunction;
 
