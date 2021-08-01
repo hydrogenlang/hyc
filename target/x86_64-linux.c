@@ -262,11 +262,17 @@ compileExpressionUnaryValuefrom(Compiler *compiler, ASTExpressionUnary expr, int
 static void
 compileExpressionUnaryPreincrement(Compiler *compiler, ASTExpressionUnary expr, int lvalue)
 {
+	if (lvalue) die("Incrementation operation will not give lvalue"); /* TODO: error() */
+	compileExpression(compiler, expr.expr, 1);
+	asmTextAppend(compiler, "\tadd QWORD [r15], 1");
 }
 
 static void
 compileExpressionUnaryPredecrement(Compiler *compiler, ASTExpressionUnary expr, int lvalue)
 {
+	if (lvalue) die("Decrementation operation will not give lvalue"); /* TODO: error() */
+	compileExpression(compiler, expr.expr, 1);
+	asmTextAppend(compiler, "\tsub QWORD [r15], 1");
 }
 
 static char *
