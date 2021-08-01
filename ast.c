@@ -350,6 +350,7 @@ tokenstoASTStatement(Tokenizer *t)
 	} else {
 		prevToken(t);
 		stat = tokenstoASTStatementExpression(t);
+		tok = enextTokenType(t, TokenSemicolon);
 	}
 
 	return stat;
