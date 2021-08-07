@@ -64,29 +64,29 @@ typedef struct ASTExpressionAny {
 } ASTExpressionAny;
 
 typedef struct ASTExpressionLiteral {
-	enum ASTExpressionType type;
+	struct ASTExpressionAny any;
 	char *value;
 } ASTExpressionLiteral;
 
 typedef struct ASTExpressionUnary {
-	enum ASTExpressionType type;
+	struct ASTExpressionAny any;
 	union ASTExpression *expr;
 } ASTExpressionUnary;
 
 typedef struct ASTExpressionBinary {
-	enum ASTExpressionType type;
+	struct ASTExpressionAny any;
 	union ASTExpression *left;
 	union ASTExpression *right;
 } ASTExpressionBinary;
 
 typedef struct ASTExpressionFunctionArgumentList {
-	enum ASTExpressionType type;
+	struct ASTExpressionAny any;
 	union ASTExpression *data;
 	size_t len;
 } ASTExpressionFunctionArgumentList;
 
 typedef struct ASTExpressionFunctionCall {
-	enum ASTExpressionType type;
+	struct ASTExpressionAny any;
 	union ASTExpression *callexpr;
 	union ASTExpression *argv;
 } ASTExpressionFunctionCall;
@@ -126,34 +126,34 @@ typedef struct ASTStatementAny {
 } ASTStatementAny;
 
 typedef struct ASTStatementCompound {
-	enum ASTStatementType type;
+	struct ASTStatementAny any;
 	union ASTStatement *data;
 	size_t len;
 } ASTStatementCompound;
 
 typedef struct ASTStatementConditional {
-	enum ASTStatementType type;
+	struct ASTStatementAny any;
 	union ASTExpression *condition;
 	union ASTStatement *body, *elsebody;
 } ASTStatementConditional;
 
 typedef struct ASTStatementReturn {
-	enum ASTStatementType type;
+	struct ASTStatementAny any;
 	union ASTExpression *expr;
 } ASTStatementReturn;
 
 typedef struct ASTStatementExpression {
-	enum ASTStatementType type;
+	struct ASTStatementAny any;
 	union ASTExpression *expr;
 } ASTStatementExpression;
 
 typedef struct ASTStatementInlineAssembly {
-	enum ASTStatementType type;
+	struct ASTStatementAny any;
 	struct ASTExpressionLiteral expr;
 } ASTStatementInlineAssembly;
 
 typedef struct ASTStatementVariableDeclaration {
-	enum ASTStatementType type;
+	struct ASTStatementAny any;
 	struct ASTExpressionLiteral name;
 } ASTStatementVariableDeclaration;
 
@@ -181,7 +181,7 @@ typedef struct ASTGlobalAny {
 } ASTGlobalAny;
 
 typedef struct ASTGlobalFunction {
-	enum ASTGlobalType type;
+	struct ASTGlobalAny any;
 	struct ASTExpressionLiteral name;
 	struct {
 		struct ASTStatementVariableDeclaration *data;
