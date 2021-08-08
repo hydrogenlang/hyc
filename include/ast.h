@@ -42,6 +42,10 @@ union ASTGlobal;
 
 /**/
 
+typedef struct ASTStructAny {
+	Token *inittoken;
+} ASTStructAny;
+
 typedef enum ASTExpressionType {
 	ASTExpressionNULL_T = 0,
 	ASTExpressionLiteralIdentifier_T,
@@ -61,6 +65,7 @@ typedef enum ASTExpressionType {
 
 typedef struct ASTExpressionAny {
 	enum ASTExpressionType type;
+	struct ASTStructAny any;
 } ASTExpressionAny;
 
 typedef struct ASTExpressionLiteral {
@@ -123,6 +128,7 @@ typedef enum ASTStatementType {
 
 typedef struct ASTStatementAny {
 	enum ASTStatementType type;
+	struct ASTStructAny any;
 } ASTStatementAny;
 
 typedef struct ASTStatementCompound {
@@ -178,6 +184,7 @@ typedef enum ASTGlobalType {
 
 typedef struct ASTGlobalAny {
 	enum ASTGlobalType type;
+	struct ASTStructAny any;
 } ASTGlobalAny;
 
 typedef struct ASTGlobalFunction {

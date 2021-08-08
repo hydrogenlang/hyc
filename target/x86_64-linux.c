@@ -199,7 +199,7 @@ compileExpressionLiteralIdentifier(Compiler *compiler, ASTExpressionLiteral expr
 {
 	struct LiteralIdentifier *iden;
 	if ((iden = identifierCheck(expr)) == NULL)
-		die("unexpected identifier"); /* TODO: error() */
+		error(expr.any.any.inittoken, "'%s' was not declared", expr.value);
 	if (iden->data.type == LIFunction) {
 		asmTextAppend(compiler, "\t%s r15, %s", lvalue ? "lea" : "mov", expr.value);
 	} else if (iden->data.type == LIVariableOnStack) {
@@ -212,14 +212,14 @@ compileExpressionLiteralIdentifier(Compiler *compiler, ASTExpressionLiteral expr
 static void
 compileExpressionLiteralInteger(Compiler *compiler, ASTExpressionLiteral expr, int lvalue)
 {
-	if (lvalue) die("Integer is not lvalue"); /* TODO: error() */
+	if (lvalue) error(expr.any.any.inittoken, "lvalue required (Integer literal is not lvalue)");
 	asmTextAppend(compiler, "\tmov r15, %s", expr.value);
 }
 
 static void
 compileExpressionLiteralString(Compiler *compiler, ASTExpressionLiteral expr, int lvalue)
 {
-	if (lvalue) die("String is not lvalue"); /* TODO: error() */
+	if (lvalue) error(expr.any.any.inittoken, "lvalue required (String literal is not lvalue)");
 	pushVector(literalStrings, &expr);
 	asmDataAppend(compiler, "\tSTR.%d: db \"%s\"",
 			literalStrings.len - 1, expr.value);
@@ -234,7 +234,7 @@ compileExpressionUnaryNegation(Compiler *compiler, ASTExpressionUnary expr, int 
 static void
 compileExpressionUnarySignChange(Compiler *compiler, ASTExpressionUnary expr, int lvalue)
 {
-	if (lvalue) die("Sign Change operation will not give lvalue"); /* TODO: error() */
+	if (lvalue) error(expr.any.any.inittoken, "lvalue required (Sign change expression is not lvalue)");
 	compileExpression(compiler, expr.expr, 0);
 	asmTextAppend(compiler, "\tneg r15");
 }
@@ -242,13 +242,13 @@ compileExpressionUnarySignChange(Compiler *compiler, ASTExpressionUnary expr, in
 static void
 compileExpressionUnaryAddressof(Compiler *compiler, ASTExpressionUnary expr, int lvalue)
 {
-	if (lvalue) die("Address is not lvalue"); /* TODO: error() */
+	if (lvalue) error(expr.any.any.inittoken, "lvalue required (Address getting expression is not lvalue)");
 	switch (expr.expr->type) {
 	case ASTExpressionLiteralIdentifier_T:
 		compileExpressionLiteralIdentifier(compiler, expr.expr->Literal, 1);
 		break;
 	default:
-		die("cannot get address of expression which is not lvalue"); /* TODO: error() */
+		error(expr.any.any.inittoken, "cannot get address of expression other than Identifier literal"); /* TODO */
 		break;
 	}
 }
@@ -263,7 +263,7 @@ compileExpressionUnaryValuefrom(Compiler *compiler, ASTExpressionUnary expr, int
 static void
 compileExpressionUnaryPreincrement(Compiler *compiler, ASTExpressionUnary expr, int lvalue)
 {
-	if (lvalue) die("Incrementation operation will not give lvalue"); /* TODO: error() */
+	if (lvalue) error(expr.any.any.inittoken, "lvalue required (Incrementation operation will not give lvalue)");
 	compileExpression(compiler, expr.expr, 1);
 	asmTextAppend(compiler, "\tadd QWORD [r15], 1");
 }
@@ -271,7 +271,7 @@ compileExpressionUnaryPreincrement(Compiler *compiler, ASTExpressionUnary expr, 
 static void
 compileExpressionUnaryPredecrement(Compiler *compiler, ASTExpressionUnary expr, int lvalue)
 {
-	if (lvalue) die("Decrementation operation will not give lvalue"); /* TODO: error() */
+	if (lvalue) error(expr.any.any.inittoken, "lvalue required (Decrementation operation will not give lvalue)");
 	compileExpression(compiler, expr.expr, 1);
 	asmTextAppend(compiler, "\tsub QWORD [r15], 1");
 }
@@ -303,7 +303,7 @@ compileExpressionFunctionArgumentList(Compiler *compiler, ASTExpressionFunctionA
 {
 	size_t i;
 	char data[32];
-	if (lvalue) die("Function Argument List is not lvalue"); /* TODO: error() */
+	if (lvalue) error(expr.any.any.inittoken, "lvalue required (Function Argument List is not lvalue)");
 	for (i = 0; i < expr.len; ++i) {
 		compileExpression(compiler, expr.data + i, 0);
 		asmTextAppend(compiler, "\tmov %s, r15", argumentRegister(i, data, sizeof data));
@@ -313,7 +313,7 @@ compileExpressionFunctionArgumentList(Compiler *compiler, ASTExpressionFunctionA
 static void
 compileExpressionFunctionCall(Compiler *compiler, ASTExpressionFunctionCall expr, int lvalue)
 {
-	if (lvalue) die("Function Call is not lvalue"); /* TODO: error() */
+	if (lvalue) error(expr.any.any.inittoken, "lvalue required (Function Call is not lvalue)");
 	compileExpression(compiler, expr.argv, 0);
 	compileExpression(compiler, expr.callexpr, 0);
 	asmTextAppend(compiler, "\tcall r15\n\tmov r15, rax");

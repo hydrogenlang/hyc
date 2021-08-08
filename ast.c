@@ -107,6 +107,8 @@ tokenstoASTExpressionLiteral(Tokenizer *t)
 	Token *tok;
 	tok = enextToken(t);
 
+	expr.Any.any.inittoken = tok;
+
 	if (tok->type == TokenIdentifier) {
 		expr.type = ASTExpressionLiteralIdentifier_T;
 		expr.Literal.value = Strdup(tok->str).data;
@@ -129,7 +131,9 @@ tokenstoASTExpressionFunctionArgumentList(Tokenizer *t)
 
 	expr.type = ASTExpressionFunctionArgumentList_T;
 	newVector(expr.FunctionArgumentList);
-	enextTokenType(t, TokenOpeningParenthesis);
+	tok = enextTokenType(t, TokenOpeningParenthesis);
+
+	expr.Any.any.inittoken = tok;
 
 	if ((tok = enextToken(t))->type != TokenClosingParenthesis) {
 		prevToken(t);
@@ -149,6 +153,8 @@ tokenstoASTExpression(Tokenizer *t)
 	ASTExpression expr;
 	Token *tok;
 	tok = enextToken(t);
+
+	expr.Any.any.inittoken = tok;
 
 	if (0) {
 	/* Literals: */
@@ -218,6 +224,7 @@ tokenstoASTStatementCompound(Tokenizer *t)
 
 	stat.type = ASTStatementCompound_T;
 	tok = enextTokenType(t, TokenOpeningBrace);
+	stat.Any.any.inittoken = tok;
 	newVector(stat.Compound);
 
 	while ((tok = enextToken(t))->type != TokenClosingBrace) {
@@ -237,6 +244,7 @@ tokenstoASTStatementConditional(Tokenizer *t)
 
 	stat.type = ASTStatementConditional_T;
 	tok = enextTokenType(t, TokenIdentifier);
+	stat.Any.any.inittoken = tok;
 	if (Strccmp(tok->str, "if"))
 		error(tok, "expected 'if' keyword");
 
@@ -262,6 +270,7 @@ tokenstoASTStatementReturn(Tokenizer *t)
 
 	stat.type = ASTStatementReturn_T;
 	tok = enextTokenType(t, TokenIdentifier);
+	stat.Any.any.inittoken = tok;
 	if (Strccmp(tok->str, "return"))
 		error(tok, "expected 'return' keyword");
 
@@ -279,6 +288,7 @@ tokenstoASTStatementExpression(Tokenizer *t)
 	stat.type = ASTStatementExpression_T;
 	*(stat.Expression.expr = malloc(sizeof *stat.Expression.expr))
 		= tokenstoASTExpression(t);
+	stat.Any.any.inittoken = stat.Expression.expr->Any.any.inittoken;
 
 	return stat;
 }
@@ -292,6 +302,7 @@ tokenstoASTStatementInlineAssembly(Tokenizer *t)
 
 	stat.type = ASTStatementInlineAssembly_T;
 	tok = enextTokenType(t, TokenIdentifier);
+	stat.Any.any.inittoken = tok;
 	if (Strccmp(tok->str, "asm"))
 		error(tok, "expected 'asm' keyword");
 
@@ -310,8 +321,13 @@ tokenstoASTStatementVariableDeclaration(Tokenizer *t, int seek)
 	stat.type = ASTStatementVariableDeclaration_T;
 	if (!seek) {
 		tok = enextTokenType(t, TokenIdentifier);
+		stat.Any.any.inittoken = tok;
 		if (Strccmp(tok->str, "var"))
 			error(tok, "expected 'var' keyword");
+	} else {
+		tok = enextToken(t);
+		stat.Any.any.inittoken = tok;
+		prevToken(t);
 	}
 
 	stat.VariableDeclaration.name = tokenstoASTExpressionLiteral(t).Literal;
@@ -326,6 +342,7 @@ tokenstoASTStatement(Tokenizer *t)
 	Token *tok;
 
 	tok = enextToken(t);
+	stat.Any.any.inittoken = tok;
 
 	if (0) {
 	} else if (tok->type == TokenSemicolon) {
@@ -367,6 +384,7 @@ tokenstoASTGlobalFunction(Tokenizer *t)
 	global.type = ASTGlobalFunction_T;
 	newVector(global.Function.parameters);
 	tok = enextTokenType(t, TokenIdentifier);
+	global.Any.any.inittoken = tok;
 	if (Strccmp(tok->str, "function"))
 		error(tok, "expected 'function' keyword");
 
