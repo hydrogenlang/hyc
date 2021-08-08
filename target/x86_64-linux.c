@@ -33,12 +33,12 @@ static size_t asmAppend(String *s, char *fmt, ...);
 static void compileExpressionLiteralIdentifier(Compiler *compiler, ASTExpressionLiteral expr, int lvalue);
 static void compileExpressionLiteralInteger(Compiler *compiler, ASTExpressionLiteral expr, int lvalue);
 static void compileExpressionLiteralString(Compiler *compiler, ASTExpressionLiteral expr, int lvalue);
-static void compileExpressionUnaryNegation(Compiler *compiler, ASTExpressionUnary expr, int lvalue);
 static void compileExpressionUnarySignChange(Compiler *compiler, ASTExpressionUnary expr, int lvalue);
 static void compileExpressionUnaryAddressof(Compiler *compiler, ASTExpressionUnary expr, int lvalue);
 static void compileExpressionUnaryValuefrom(Compiler *compiler, ASTExpressionUnary expr, int lvalue);
 static void compileExpressionUnaryPreincrement(Compiler *compiler, ASTExpressionUnary expr, int lvalue);
 static void compileExpressionUnaryPredecrement(Compiler *compiler, ASTExpressionUnary expr, int lvalue);
+static void compileExpressionUnaryLogicalNot(Compiler *compiler, ASTExpressionUnary expr, int lvalue);
 static void compileExpressionFunctionCall(Compiler *compiler, ASTExpressionFunctionCall expr, int lvalue);
 static void compileExpression(Compiler *compiler, union ASTExpression *expression, int lvalue);
 
@@ -227,11 +227,6 @@ compileExpressionLiteralString(Compiler *compiler, ASTExpressionLiteral expr, in
 }
 
 static void
-compileExpressionUnaryNegation(Compiler *compiler, ASTExpressionUnary expr, int lvalue)
-{
-}
-
-static void
 compileExpressionUnarySignChange(Compiler *compiler, ASTExpressionUnary expr, int lvalue)
 {
 	if (lvalue) error(expr.any.any.inittoken, "lvalue required (Sign change expression is not lvalue)");
@@ -274,6 +269,16 @@ compileExpressionUnaryPredecrement(Compiler *compiler, ASTExpressionUnary expr, 
 	if (lvalue) error(expr.any.any.inittoken, "lvalue required (Decrementation operation will not give lvalue)");
 	compileExpression(compiler, expr.expr, 1);
 	asmTextAppend(compiler, "\tsub QWORD [r15], 1");
+}
+
+static void
+compileExpressionUnaryLogicalNot(Compiler *compiler, ASTExpressionUnary expr, int lvalue)
+{
+	if (lvalue) error(expr.any.any.inittoken, "lvalue required (Logical negation will not give lvalue)");
+	compileExpression(compiler, expr.expr, 0);
+	asmTextAppend(compiler, "\tcmp r15, 0");
+	asmTextAppend(compiler, "\tsete al");
+	asmTextAppend(compiler, "\tmovzx r15, al");
 }
 
 static char *
@@ -343,9 +348,6 @@ compileExpression(Compiler *compiler, union ASTExpression *expression, int lvalu
 	case ASTExpressionLiteralString_T:
 		compileExpressionLiteralString(compiler, expression->Literal, lvalue);
 		break;
-	case ASTExpressionUnaryNegation_T:
-		compileExpressionUnaryNegation(compiler, expression->Unary, lvalue);
-		break;
 	case ASTExpressionUnarySignChange_T:
 		compileExpressionUnarySignChange(compiler, expression->Unary, lvalue);
 		break;
@@ -360,6 +362,9 @@ compileExpression(Compiler *compiler, union ASTExpression *expression, int lvalu
 		break;
 	case ASTExpressionUnaryPredecrement_T:
 		compileExpressionUnaryPredecrement(compiler, expression->Unary, lvalue);
+		break;
+	case ASTExpressionUnaryLogicalNot_T:
+		compileExpressionUnaryLogicalNot(compiler, expression->Unary, lvalue);
 		break;
 	case ASTExpressionFunctionArgumentList_T:
 		compileExpressionFunctionArgumentList(compiler, expression->FunctionArgumentList, lvalue);

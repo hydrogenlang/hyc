@@ -171,7 +171,7 @@ tokenstoASTExpression(Tokenizer *t)
 		expr = tokenstoASTExpression(t);
 		enextTokenType(t, TokenClosingParenthesis);
 	} else if (tok->type == TokenExclamationMark) {
-		expr.type = ASTExpressionUnaryNegation_T;
+		expr.type = ASTExpressionUnaryLogicalNot_T;
 		new(expr.Unary.expr) = tokenstoASTExpression(t);
 	} else if (tok->type == TokenMinus) {
 		expr.type = ASTExpressionUnarySignChange_T;

@@ -51,12 +51,12 @@ typedef enum ASTExpressionType {
 	ASTExpressionLiteralIdentifier_T,
 	ASTExpressionLiteralInteger_T,
 	ASTExpressionLiteralString_T,
-	ASTExpressionUnaryNegation_T,
 	ASTExpressionUnarySignChange_T,
 	ASTExpressionUnaryAddressof_T,
 	ASTExpressionUnaryValuefrom_T,
 	ASTExpressionUnaryPreincrement_T,
 	ASTExpressionUnaryPredecrement_T,
+	ASTExpressionUnaryLogicalNot_T,
 	ASTExpressionFunctionArgumentList_T,
 	ASTExpressionFunctionCall_T,
 	ASTExpressionBinaryAssignment_T,
@@ -101,12 +101,12 @@ typedef union ASTExpression {
 	struct ASTExpressionAny Any;
 	struct ASTExpressionLiteral Literal;
 	struct ASTExpressionUnary Unary;
-	struct ASTExpressionUnary UnaryNegation;
 	struct ASTExpressionUnary UnarySignChange;
 	struct ASTExpressionUnary UnaryAddressof;
 	struct ASTExpressionUnary UnaryValuefrom;
 	struct ASTExpressionUnary UnaryPreincrement;
 	struct ASTExpressionUnary UnaryPredecrement;
+	struct ASTExpressionUnary UnaryLogicalNot;
 	struct ASTExpressionFunctionArgumentList FunctionArgumentList;
 	struct ASTExpressionFunctionCall FunctionCall;
 	struct ASTExpressionBinary Binary;
