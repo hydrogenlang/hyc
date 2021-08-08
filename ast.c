@@ -70,8 +70,8 @@ nextTokenType(Tokenizer *t, TokenType type)
 	Token *tok;
 	if ((tok = nextToken(t)) != NULL) {
 		if (tok->type != type)
-			error(tok, "token type mismatch (expected %s, got %s)",
-					strTokenType(type), strTokenType(tok->type));
+			error(tok, "unexpected '%s' (expected '%s')",
+					strTokenType(tok->type), strTokenType(type));
 	}
 	return tok;
 }
@@ -91,8 +91,8 @@ enextTokenType(Tokenizer *t, TokenType type)
 	Token *tok;
 	tok = enextToken(t);
 	if (tok->type != type)
-		error(tok, "token type mismatch (expected %s, got %s)",
-				strTokenType(type), strTokenType(tok->type));
+		error(tok, "unexpected '%s' (expected '%s')",
+				strTokenType(tok->type), strTokenType(type));
 	return tok;
 }
 
