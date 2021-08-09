@@ -51,6 +51,7 @@ static ASTStatement tokenstoASTStatementVariableDeclaration(Tokenizer *t, int se
 static ASTStatement tokenstoASTStatement(Tokenizer *t);
 
 static ASTGlobal tokenstoASTGlobalFunction(Tokenizer *t);
+static ASTGlobal tokenstoASTGlobal(Tokenizer *t);
 
 static Token *
 prevToken(Tokenizer *t)
@@ -406,6 +407,26 @@ tokenstoASTGlobalFunction(Tokenizer *t)
 	return global;
 }
 
+static ASTGlobal
+tokenstoASTGlobal(Tokenizer *t)
+{
+	ASTGlobal global;
+	Token *tok;
+
+	tok = enextToken(t);
+	global.Any.any.inittoken = tok;
+
+	if (0) {
+	} else if (tok->type == TokenIdentifier && !Strccmp(tok->str, "function")) {
+		prevToken(t);
+		global = tokenstoASTGlobalFunction(t);
+	} else {
+		error(tok, "unexpected token");
+	}
+
+	return global;
+}
+
 ASTModule
 tokenstoASTModule(Token *tdata, size_t tlen)
 {
@@ -415,11 +436,9 @@ tokenstoASTModule(Token *tdata, size_t tlen)
 
 	newVector(module);
 
-	while ((tok = nextTokenType(&t, TokenIdentifier)) != NULL) {
-		if (!Strccmp(tok->str, "function")) {
-			prevToken(&t);
-			pushVector(module, tokenstoASTGlobalFunction(&t));
-		}
+	while ((tok = nextToken(&t)) != NULL) {
+		prevToken(&t);
+		pushVector(module, tokenstoASTGlobal(&t));
 	}
 
 	return module;
