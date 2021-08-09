@@ -491,11 +491,21 @@ compileGlobalFunction(Compiler *compiler, ASTGlobalFunction func)
 }
 
 static void
+compileGlobalExport(Compiler *compiler, ASTGlobalExport global)
+{
+	/* TODO: checking for identifier existence */
+	asmTextAppend(compiler, "global %s", global.name.value);
+}
+
+static void
 compileGlobal(Compiler *compiler, union ASTGlobal *global)
 {
 	switch (global->type) {
 	case ASTGlobalFunction_T:
 		compileGlobalFunction(compiler, global->Function);
+		break;
+	case ASTGlobalExport_T:
+		compileGlobalExport(compiler, global->Export);
 		break;
 	default: break;
 	}

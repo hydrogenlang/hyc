@@ -179,6 +179,7 @@ typedef union ASTStatement {
 typedef enum ASTGlobalType {
 	ASTGlobalNothing_T = 0,
 	ASTGlobalFunction_T,
+	ASTGlobalExport_T,
 	ASTGlobal_Count,
 } ASTGlobalType;
 
@@ -197,10 +198,16 @@ typedef struct ASTGlobalFunction {
 	union ASTStatement *body;
 } ASTGlobalFunction;
 
+typedef struct ASTGlobalExport {
+	struct ASTGlobalAny any;
+	struct ASTExpressionLiteral name;
+} ASTGlobalExport;
+
 typedef union ASTGlobal {
 	enum ASTGlobalType type;
 	struct ASTGlobalAny Any;
 	struct ASTGlobalFunction Function;
+	struct ASTGlobalExport Export;
 } ASTGlobal;
 
 /**/

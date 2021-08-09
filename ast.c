@@ -51,6 +51,7 @@ static ASTStatement tokenstoASTStatementVariableDeclaration(Tokenizer *t, int se
 static ASTStatement tokenstoASTStatement(Tokenizer *t);
 
 static ASTGlobal tokenstoASTGlobalFunction(Tokenizer *t);
+static ASTGlobal tokenstoASTGlobalExport(Tokenizer *t);
 static ASTGlobal tokenstoASTGlobal(Tokenizer *t);
 
 static Token *
@@ -408,6 +409,23 @@ tokenstoASTGlobalFunction(Tokenizer *t)
 }
 
 static ASTGlobal
+tokenstoASTGlobalExport(Tokenizer *t)
+{
+	ASTGlobal global;
+	Token *tok;
+
+	global.type = ASTGlobalExport_T;
+	tok = enextTokenType(t, TokenIdentifier);
+	global.Any.any.inittoken = tok;
+	if (Strccmp(tok->str, "export"))
+		error(tok, "expected 'export' keyword");
+
+	global.Export.name = tokenstoASTExpressionLiteral(t).Literal;
+
+	return global;
+}
+
+static ASTGlobal
 tokenstoASTGlobal(Tokenizer *t)
 {
 	ASTGlobal global;
@@ -420,6 +438,9 @@ tokenstoASTGlobal(Tokenizer *t)
 	} else if (tok->type == TokenIdentifier && !Strccmp(tok->str, "function")) {
 		prevToken(t);
 		global = tokenstoASTGlobalFunction(t);
+	} else if (tok->type == TokenIdentifier && !Strccmp(tok->str, "export")) {
+		prevToken(t);
+		global = tokenstoASTGlobalExport(t);
 	} else {
 		error(tok, "unexpected token");
 	}
