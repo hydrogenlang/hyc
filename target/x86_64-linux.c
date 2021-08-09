@@ -490,6 +490,17 @@ compileGlobalFunction(Compiler *compiler, ASTGlobalFunction func)
 	asmTextAppend(compiler, "\tret");
 }
 
+static void
+compileGlobal(Compiler *compiler, union ASTGlobal *global)
+{
+	switch (global->type) {
+	case ASTGlobalFunction_T:
+		compileGlobalFunction(compiler, global->Function);
+		break;
+	default: break;
+	}
+}
+
 /* Module ********************************************************************/
 
 Compiler
@@ -507,8 +518,7 @@ compileModule(ASTModule module)
 	pushVector(globalLiteralIdentifierTree, newLiteralIdentifierTree());
 
 	for (i = 0; i < module.len; ++i) {
-		if ((glob = &module.data[i])->type == ASTGlobalFunction_T)
-			compileGlobalFunction(&compiler, module.data[i].Function);
+		compileGlobal(&compiler, &module.data[i]);
 	}
 
 	return compiler;
